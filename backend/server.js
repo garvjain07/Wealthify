@@ -36,6 +36,22 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(UPLOAD_DIR));
 
+app.get('/', (req, res) => {
+    res.json({
+        service: 'Money Manager Backend',
+        status: 'ok',
+        docs: '/api'
+    });
+});
+
+app.get('/api', (req, res) => {
+    res.json({
+        service: 'Money Manager API',
+        status: 'ok',
+        public_endpoints: ['/api/login', '/api/register', '/api/user/reset-pin']
+    });
+});
+
 let db = null;
 let mongoReady = false;
 const dbProvider = 'mongodb';

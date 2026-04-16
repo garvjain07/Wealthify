@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+const buildApiUrl = (path, query = '') => `${API_ORIGIN}${path}${query}`;
 
 const api = axios.create({
     baseURL: API_BASE_URL
@@ -185,11 +187,11 @@ export const getYearlyComparison = () => api.get('/reports/yearly-comparison');
 export const downloadMonthlyPdf = (month) => {
     const token = localStorage.getItem('token');
     const q = month ? `&month=${encodeURIComponent(month)}` : '';
-    window.open(`http://localhost:3001/api/reports/monthly-pdf?token=${token}${q}`, '_blank');
+    window.open(buildApiUrl('/api/reports/monthly-pdf', `?token=${token}${q}`), '_blank');
 };
 export const downloadTaxExport = () => {
     const token = localStorage.getItem('token');
-    window.open(`http://localhost:3001/api/reports/tax-export?token=${token}`, '_blank');
+    window.open(buildApiUrl('/api/reports/tax-export', `?token=${token}`), '_blank');
 };
 
 export const uploadMedia = async (file) => {
@@ -206,7 +208,7 @@ export const importCSV = async (file) => {
 
 export const exportCSV = () => {
     const token = localStorage.getItem('token');
-    window.open(`http://localhost:3001/api/export/csv?token=${token}`, '_blank');
+    window.open(buildApiUrl('/api/export/csv', `?token=${token}`), '_blank');
 };
 
 export const updateCategoryBudget = (id, monthly_budget) => api.put(`/categories/${id}/budget`, { monthly_budget });
@@ -230,7 +232,7 @@ export const deleteGoal = (id) => api.delete(`/goals/${id}`);
 
 export const downloadBackup = () => {
     const token = localStorage.getItem('token');
-    window.open(`http://localhost:3001/api/backup/db?token=${token}`, '_blank');
+    window.open(buildApiUrl('/api/backup/db', `?token=${token}`), '_blank');
 };
 
 export const restoreBackup = async (file) => {

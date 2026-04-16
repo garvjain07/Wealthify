@@ -208,9 +208,40 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
 
   const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981'];
   const getIcon = (type) => type==='Bank' ? <Landmark className="w-5 h-5 text-blue-500" /> : type==='Wallet' ? <Wallet className="w-5 h-5 text-purple-500" /> : <Banknote className="w-5 h-5 text-emerald-500" />;
+  const mobileTopTabs = [
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'transactions', icon: ListOrdered, label: 'Transactions' },
+    { id: 'subscriptions', icon: Repeat, label: 'Subscriptions' },
+    { id: 'wealth', icon: TrendingUp, label: 'Wealth' },
+    { id: 'goals', icon: PiggyBank, label: 'Goals' },
+    { id: 'calendar', icon: CalendarClock, label: 'Calendar' },
+    { id: 'analytics', icon: BarChart2, label: 'Analytics' },
+    { id: 'notifications', icon: Bell, label: 'Notifications' },
+    { id: 'settings', icon: Settings, label: 'Settings' }
+  ];
+  const mobileBottomTabs = [
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
+    { id: 'transactions', icon: ListOrdered, label: 'Txns' },
+    { id: 'wealth', icon: TrendingUp, label: 'Wealth' },
+    { id: 'goals', icon: PiggyBank, label: 'Goals' },
+    { id: 'calendar', icon: CalendarClock, label: 'Calendar' }
+  ];
 
     const NavBtn = ({ id, icon: Icon, label }) => (
       <button onClick={() => setActiveTab(id)} className={cn("flex items-center gap-2 px-3 py-2 rounded-xl font-medium text-sm transition", activeTab === id ? "bg-emerald-500 text-white" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700")}><Icon className="w-4 h-4" /> {label}</button>
+  );
+
+  const MobileNavBtn = ({ id, icon: Icon, label }) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition",
+        activeTab === id ? "bg-emerald-500 text-white" : "text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-300"
+      )}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </button>
   );
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -239,14 +270,39 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         </div>
       </aside>
 
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+      <main className="flex-1 p-4 pb-24 md:pb-8 md:p-8 overflow-y-auto">
+        <div className="md:hidden mb-4 space-y-3">
+          <div className={cn("p-3 rounded-2xl border flex items-center justify-between", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+            <div className="flex items-center gap-2 min-w-0">
+              {userProfile.avatar_url ? <img src={userProfile.avatar_url} className="w-9 h-9 rounded-full object-cover"/> : <div className="bg-emerald-500 p-2 rounded-lg"><Wallet className="w-4 h-4 text-white" /></div>}
+              <div className="min-w-0">
+                <p className="text-xs opacity-70">Welcome</p>
+                <p className="text-sm font-bold truncate">{userProfile.username}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowQuickAdd(true)} className="p-2 rounded-lg bg-indigo-500 text-white"><Plus className="w-4 h-4" /></button>
+              <button onClick={() => setDarkMode(!darkMode)} className={cn("p-2 rounded-lg", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-100 text-slate-700")}>{darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</button>
+              <button onClick={onLogout} className="p-2 rounded-lg bg-rose-500 text-white"><LogOut className="w-4 h-4" /></button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto pb-1 custom-scrollbar">
+            <div className="flex gap-2 w-max">
+              {mobileTopTabs.map((tab) => (
+                <MobileNavBtn key={`mobile-top-${tab.id}`} id={tab.id} icon={tab.icon} label={tab.label} />
+              ))}
+            </div>
+          </div>
+        </div>
+
         {(offlineQueueCount > 0 || syncingOffline) && <div className={cn("mb-4 p-3 rounded-xl text-sm flex items-center justify-between", darkMode ? "bg-amber-900/40 border border-amber-700" : "bg-amber-50 border border-amber-200")}><span>{syncingOffline ? 'Syncing offline transactions...' : `${offlineQueueCount} transaction(s) queued offline`}</span><button onClick={async()=>{ setSyncingOffline(true); try { await syncOfflineTransactionQueue(); } finally { setSyncingOffline(false); setOfflineQueueCount(getOfflineQueueCount()); setOfflineQueueItems(getOfflineQueueItems()); fetchData(); } }} className="px-3 py-1 rounded bg-amber-500 text-white text-xs font-bold">Sync Now</button></div>}
         {activeTab === 'dashboard' && (
            <div className="w-full space-y-5">
-             <header className="flex justify-between items-center">
+             <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
                <div><h2 className="text-2xl font-bold">Overview</h2><p className="opacity-70">Track your finances</p></div>
-               <div className="flex gap-4">
-                 <button onClick={exportCSV} className="flex gap-2 items-center bg-indigo-50 text-indigo-600 px-4 py-2 font-medium rounded-xl hover:bg-indigo-100 transition"><FileText className="w-4 h-4"/> Export Report (CSV)</button>
+               <div className="flex flex-col sm:flex-row gap-2 md:gap-4 w-full md:w-auto">
+                 <button onClick={exportCSV} className="flex gap-2 items-center justify-center bg-indigo-50 text-indigo-600 px-4 py-2 font-medium rounded-xl hover:bg-indigo-100 transition"><FileText className="w-4 h-4"/> Export Report (CSV)</button>
                  <select value={dateFilter} onChange={e=>setDateFilter(e.target.value)} className={cn("px-4 py-2 rounded-xl text-sm font-medium border outline-none", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
                    <option value="current">This Month</option><option value="last">Last Month</option><option value="all">All Time</option>
                  </select>
@@ -380,6 +436,24 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         {activeTab === 'settings' && <SettingsView accounts={accounts} categories={categories} onRefresh={fetchData} refreshProfile={refreshProfile} userProfile={userProfile} darkMode={darkMode} snapshots={snapshots} offlineQueueItems={offlineQueueItems} setOfflineQueueItems={setOfflineQueueItems} setOfflineQueueCount={setOfflineQueueCount} />}
 
         {showQuickAdd && <QuickAddModal accounts={accounts} categories={categories} onClose={() => setShowQuickAdd(false)} onSaved={fetchData} darkMode={darkMode} setOfflineQueueCount={setOfflineQueueCount} />}
+
+        <div className={cn("md:hidden fixed bottom-0 left-0 right-0 z-20 border-t px-2 py-2", darkMode ? "bg-slate-900/95 border-slate-700" : "bg-white/95 border-slate-200") }>
+          <div className="grid grid-cols-5 gap-1">
+            {mobileBottomTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={`mobile-bottom-${tab.id}`}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn("flex flex-col items-center justify-center py-1 rounded-lg text-[11px] font-semibold", activeTab === tab.id ? "text-emerald-500" : "text-slate-500")}
+                >
+                  <Icon className="w-4 h-4 mb-0.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </main>
     </div>
   );
@@ -614,7 +688,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
          <div className="flex items-center gap-2 flex-wrap">
            <span className="text-sm opacity-70">Bulk:</span>
-           <input value={bulkTag} onChange={e=>setBulkTag(e.target.value)} placeholder="Tag selected" className={`${toolbarFieldClass} w-56`} />
+           <input value={bulkTag} onChange={e=>setBulkTag(e.target.value)} placeholder="Tag selected" className={`${toolbarFieldClass} w-full sm:w-56`} />
            <button onClick={async()=>{ if (!selectedIds.length) return; await bulkTagTransactions(selectedIds, bulkTag); setSelectedIds([]); setBulkTag(''); onRefresh(); }} className={`${toolbarBtnBase} bg-indigo-500 text-white`}>Apply Tag</button>
            <button onClick={async()=>{ if (!selectedIds.length) return; if (!doubleConfirmDelete('selected transactions')) return; await bulkDeleteTransactions(selectedIds); setSelectedIds([]); onRefresh(); }} className={`${toolbarBtnBase} bg-rose-500 text-white`}>Delete Selected</button>
            <span className="text-xs opacity-60">{selectedIds.length} selected</span>
@@ -627,7 +701,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
        </div>
 
        {isOpen && (
-         <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+         <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
             <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div><label className="block text-sm mb-2">Type</label><TxFormSelect darkMode={darkMode} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}><option>Expense</option><option>Income</option><option>Transfer</option></TxFormSelect></div>
                 <div><label className="block text-sm mb-2">Amount</label><TxFormInput darkMode={darkMode} type="number" step="0.01" required value={splitMode && formData.type !== 'Transfer' ? splitItems.reduce((sum, s) => sum + Number(s.amount || 0), 0) : formData.amount} onChange={e => setFormData({...formData, amount: parseFloat(e.target.value)})} disabled={splitMode && formData.type !== 'Transfer'} /></div>
@@ -657,14 +731,15 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
                     <button type="button" onClick={()=>setSplitItems([...splitItems, { category_id: '', amount: 0, tag: '' }])} className="text-indigo-500 text-sm font-medium">+ Add Split Row</button>
                   </div>
                 )}
-                <div className="md:col-span-2"><label className="block text-sm mb-2">Receipt (Image)</label><input type="file" onChange={handleTxFile} /> {uploading && 'Uploading...'} {formData.receipt_url && <a href={formData.receipt_url} className="text-emerald-500">View</a>}</div>
-                <div className="md:col-span-2 flex justify-end"><button type="submit" disabled={uploading} className="bg-emerald-600 text-white px-6 py-2 rounded-xl">Save</button></div>
+                 <div className="md:col-span-2"><label className="block text-sm mb-2">Receipt (Image)</label><input type="file" onChange={handleTxFile} /> {uploading && 'Uploading...'} {formData.receipt_url && <a href={formData.receipt_url} className="text-emerald-500">View</a>}</div>
+                 <div className="md:col-span-2 flex justify-stretch md:justify-end"><button type="submit" disabled={uploading} className="bg-emerald-600 text-white px-6 py-2 rounded-xl w-full md:w-auto">Save</button></div>
             </form>
          </div>
        )}
 
-       <div className={cn("border text-sm rounded-2xl shadow-sm overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-          <table className="w-full text-left"><thead className={cn("border-b opacity-70", darkMode ? "bg-slate-900 border-slate-700":"bg-slate-50")}><tr><th className="p-4"><input type="checkbox" onChange={(e)=>setSelectedIds(e.target.checked ? filteredList.map(x=>x.id) : [])} checked={filteredList.length > 0 && selectedIds.length === filteredList.length} /></th><th className="p-4">Date</th><th className="p-4">Details</th><th className="p-4">Category</th><th className="p-4 text-right">Amount</th><th className="p-4"></th></tr></thead>
+           <div className={cn("border text-sm rounded-2xl shadow-sm overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+             <div className="overflow-x-auto">
+             <table className="w-full min-w-[760px] text-left"><thead className={cn("border-b opacity-70", darkMode ? "bg-slate-900 border-slate-700":"bg-slate-50")}><tr><th className="p-4"><input type="checkbox" onChange={(e)=>setSelectedIds(e.target.checked ? filteredList.map(x=>x.id) : [])} checked={filteredList.length > 0 && selectedIds.length === filteredList.length} /></th><th className="p-4">Date</th><th className="p-4">Details</th><th className="p-4">Category</th><th className="p-4 text-right">Amount</th><th className="p-4"></th></tr></thead>
             <tbody>
               {filteredList.map(t => (
                   
@@ -695,10 +770,11 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
               ))}
             </tbody>
           </table>
+          </div>
        </div>
-       <div className="flex items-center justify-between pt-2">
+       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 gap-2">
          <div className="text-sm opacity-70">Total: {txTotal}</div>
-         <div className="flex items-center gap-2">
+         <div className="flex items-center gap-2 flex-wrap sm:justify-end">
            <button disabled={txPage <= 1} onClick={()=>setTxPage(Math.max(1, txPage - 1))} className={cn("h-9 px-3 rounded-lg border text-sm font-medium disabled:opacity-40", darkMode ? "border-slate-700 bg-slate-800" : "border-slate-300 bg-white")}>Prev</button>
            <span className="text-sm">Page {txPage}</span>
            <button disabled={txPage * txPageSize >= txTotal} onClick={()=>setTxPage(txPage + 1)} className={cn("h-9 px-3 rounded-lg border text-sm font-medium disabled:opacity-40", darkMode ? "border-slate-700 bg-slate-800" : "border-slate-300 bg-white")}>Next</button>
@@ -783,19 +859,19 @@ function SubscriptionsView({ subs, categories, accounts, onRefresh, darkMode, cu
        <div className="w-full space-y-6">
            <h2 className="text-2xl font-bold">Recurring Subscriptions</h2>
            <button onClick={async ()=>{ const r = await runRecurringAutomation(); alert(`Processed: ${r.data.processed}`); onRefresh(); }} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Run Recurring Now</button>
-           <form onSubmit={submit} className={cn("p-6 border rounded-2xl flex flex-col gap-4 shadow-sm", darkMode ? "bg-slate-800 border-slate-700":"bg-white")}>
-               <div className="flex gap-4">
+            <form onSubmit={submit} className={cn("p-4 md:p-6 border rounded-2xl flex flex-col gap-4 shadow-sm", darkMode ? "bg-slate-800 border-slate-700":"bg-white")}>
+              <div className="flex flex-col md:flex-row gap-4">
                   <input required className={inputClass} placeholder="Name (e.g. Netflix)" value={formData.name} onChange={e=>setFormData({...formData, name:e.target.value})} />
                   <input required type="number" step="0.01" className={inputClass} placeholder="Amount $" value={formData.amount} onChange={e=>setFormData({...formData, amount:parseFloat(e.target.value)})} />
                   <select className={inputClass} value={formData.type} onChange={e=>setFormData({...formData, type:e.target.value})}><option>Expense</option><option>Income</option></select>
                   <select className={inputClass} value={formData.frequency} onChange={e=>setFormData({...formData, frequency:e.target.value})}><option>Monthly</option><option>Yearly</option><option>Weekly</option></select>
                </div>
-               <div className="flex gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
                   <select required className={inputClass} value={formData.account_id} onChange={e=>setFormData({...formData, account_id:e.target.value})}><option value="">Account...</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select>
                   <select required className={inputClass} value={formData.category_id} onChange={e=>setFormData({...formData, category_id:e.target.value})}><option value="">Category...</option>{categories.filter(c=>c.type===formData.type).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
                   <input required type="date" className={inputClass} value={formData.next_date} onChange={e=>setFormData({...formData, next_date:e.target.value})} />
                </div>
-               <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                  <button className="bg-indigo-500 text-white py-2 rounded font-bold flex-1">{editingSubId ? 'Update Subscription' : 'Add Subscription'}</button>
                  {editingSubId && <button type="button" onClick={cancelEdit} className="bg-slate-300 text-slate-800 py-2 px-4 rounded font-bold">Cancel</button>}
                </div>
@@ -803,9 +879,9 @@ function SubscriptionsView({ subs, categories, accounts, onRefresh, darkMode, cu
            
            <div className={cn("border rounded-2xl shadow-sm", darkMode ? "bg-slate-800 border-slate-700":"bg-white")}>
               {subs.map(s => (
-                  <div key={s.id} className="flex justify-between p-4 border-b border-slate-100 dark:border-slate-700">
+                <div key={s.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-slate-100 dark:border-slate-700">
                       <div><div className="font-bold">{s.name} <span className="opacity-50 text-xs">({s.frequency})</span></div><div className="text-xs opacity-70">Next: {s.next_date} | {s.account_name} | {s.category_name}</div></div>
-                        <div className="flex items-center gap-4"><div className={cn("font-bold", s.type==='Income'?"text-emerald-500":"text-rose-500")}>{curr}{s.amount}</div><button onClick={()=>startEdit(s)}><Edit2 className="w-4 h-4 text-indigo-500"/></button><button onClick={async ()=>{ if (!doubleConfirmDelete('subscription')) return; await deleteSubscription(s.id);onRefresh();}}><Trash2 className="w-4 h-4 text-rose-500"/></button></div>
+                    <div className="flex items-center gap-4 self-end sm:self-auto"><div className={cn("font-bold", s.type==='Income'?"text-emerald-500":"text-rose-500")}>{curr}{s.amount}</div><button onClick={()=>startEdit(s)}><Edit2 className="w-4 h-4 text-indigo-500"/></button><button onClick={async ()=>{ if (!doubleConfirmDelete('subscription')) return; await deleteSubscription(s.id);onRefresh();}}><Trash2 className="w-4 h-4 text-rose-500"/></button></div>
                   </div>
               ))}
            </div>
@@ -890,7 +966,7 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
     <div className="w-full space-y-6">
       <h2 className="text-2xl font-bold">Saving Goals / Wishlist</h2>
       {goalNotice && (
-        <div className={cn("fixed top-4 right-4 z-60 px-4 py-2 rounded-lg text-sm font-medium shadow-lg", goalNotice.type === 'error' ? "bg-rose-500 text-white" : "bg-emerald-500 text-white")}>
+        <div className={cn("fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-auto z-60 px-4 py-2 rounded-lg text-sm font-medium shadow-lg", goalNotice.type === 'error' ? "bg-rose-500 text-white" : "bg-emerald-500 text-white")}>
           {goalNotice.message}
         </div>
       )}
@@ -898,8 +974,8 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
         <input required placeholder="Goal title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} className={cn("p-2 rounded border", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
         <input required type="number" step="0.01" min="0.01" placeholder="Target amount" value={form.target_amount} onChange={e=>setForm({...form, target_amount:Number(e.target.value)})} className={cn("p-2 rounded border", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
         <input type="date" value={form.due_date} onChange={e=>setForm({...form, due_date:e.target.value})} className={cn("p-2 rounded border", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
-        <button className="bg-emerald-500 text-white rounded p-2 font-bold">{form.id ? 'Update Goal' : 'Add Goal'}</button>
-        {form.id ? <button type="button" onClick={resetForm} className="bg-slate-500 text-white rounded p-2 font-bold">Cancel</button> : <div />}
+        <button className="bg-emerald-500 text-white rounded p-2 font-bold w-full">{form.id ? 'Update Goal' : 'Add Goal'}</button>
+        {form.id ? <button type="button" onClick={resetForm} className="bg-slate-500 text-white rounded p-2 font-bold w-full">Cancel</button> : <div className="hidden md:block" />}
       </form>
 
       <div className="space-y-4">
@@ -920,12 +996,12 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
               || (selectedUtilizeType === 'buy_things' && !!selectedItemName)
             );
           return <div key={g.id} className={cn("p-4 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-            <div className="flex justify-between items-center mb-2"><h3 className="font-bold">{g.title}</h3><span className={cn("text-xs px-2 py-1 rounded", g.status === 'Completed' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>{g.status}</span></div>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2"><h3 className="font-bold">{g.title}</h3><span className={cn("text-xs px-2 py-1 rounded w-fit", g.status === 'Completed' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>{g.status}</span></div>
             <p className="text-sm opacity-70 mb-2">{curr}{Number(g.saved_amount).toLocaleString()} / {curr}{Number(g.target_amount).toLocaleString()} {g.due_date ? `| Due: ${g.due_date}` : ''}</p>
             <div className={cn("h-3 rounded-full overflow-hidden mb-3", darkMode ? "bg-slate-900" : "bg-slate-100")}><div className="h-full bg-emerald-500" style={{ width: `${pct}%` }}></div></div>
-            <div className="flex items-center gap-2 w-full">
-              <input type="number" step="0.01" placeholder="Add savings" value={contrib[g.id] || ''} onChange={e=>setContrib({...contrib, [g.id]: e.target.value})} className={cn("h-9 px-3 rounded border w-48 text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
-              <select value={contribAccount[g.id] || ''} onChange={e=>setContribAccount({...contribAccount, [g.id]: e.target.value})} className={cn("h-9 px-3 rounded border text-sm min-w-56", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
+            <div className="flex items-center gap-2 w-full flex-wrap">
+              <input type="number" step="0.01" placeholder="Add savings" value={contrib[g.id] || ''} onChange={e=>setContrib({...contrib, [g.id]: e.target.value})} className={cn("h-9 px-3 rounded border w-full sm:w-48 text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+              <select value={contribAccount[g.id] || ''} onChange={e=>setContribAccount({...contribAccount, [g.id]: e.target.value})} className={cn("h-9 px-3 rounded border text-sm w-full sm:w-auto sm:min-w-56", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
                 <option value="">Select account</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name} ({curr}{Number(a.balance || 0).toLocaleString()})</option>)}
               </select>
@@ -974,18 +1050,35 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
                   Utilize
                 </button>
               )}
-              <div className="ml-auto flex items-center gap-3">
+              <div className="flex items-center gap-3 sm:ml-auto">
                 <button onClick={()=>startEditGoal(g)} className="text-sm text-indigo-500">Edit</button>
                 <button onClick={async()=>{ if (!doubleConfirmDelete('goal')) return; await deleteGoal(g.id); onRefresh();}} className="text-sm text-rose-500">Delete</button>
               </div>
             </div>
             {g.status === 'Completed' && utilizeOpen[g.id] && (
               <div className={cn("mt-3 p-3 rounded-lg border flex flex-col md:flex-row md:items-center gap-2", darkMode ? "border-slate-700 bg-slate-900/40" : "border-slate-200 bg-slate-50")}>
-                <select value={selectedUtilizeType} onChange={e=>setUtilizeType({ ...utilizeType, [g.id]: e.target.value })} className={cn("h-9 px-3 rounded border text-sm min-w-52", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
+                <select value={selectedUtilizeType} onChange={e=>setUtilizeType({ ...utilizeType, [g.id]: e.target.value })} className={cn("h-9 px-3 rounded border text-sm w-full md:w-auto md:min-w-52", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
                   <option value="">Utilize as...</option>
                   <option value="convert_assets">Convert into assets</option>
                   <option value="buy_things">Buy things</option>
                 </select>
+                {selectedUtilizeType === 'convert_assets' && (
+                  <>
+                    <select value={selectedAssetType} onChange={e=>setUtilizeAssetType({ ...utilizeAssetType, [g.id]: e.target.value })} className={cn("h-9 px-3 rounded border text-sm w-full md:w-auto md:min-w-48", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
+                      <option value="">Select asset type</option>
+                      <option value="Gold">Gold</option>
+                      <option value="Stock">Stock</option>
+                      <option value="Mutual Fund">Mutual Fund</option>
+                      <option value="Fixed Deposit">Fixed Deposit</option>
+                      <option value="Crypto">Crypto</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <input value={utilizeAssetName[g.id] || ''} onChange={e=>setUtilizeAssetName({ ...utilizeAssetName, [g.id]: e.target.value })} placeholder="Asset name" className={cn("h-9 px-3 rounded border text-sm w-full md:w-auto md:min-w-52", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                  </>
+                )}
+                {selectedUtilizeType === 'buy_things' && (
+                  <input value={utilizeItemName[g.id] || ''} onChange={e=>setUtilizeItemName({ ...utilizeItemName, [g.id]: e.target.value })} placeholder="Item name" className={cn("h-9 px-3 rounded border text-sm w-full md:w-auto md:min-w-52", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                )}
                 <button
                   type="button"
                   disabled={!canUtilize}
@@ -1012,27 +1105,10 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
                       showGoalNotice(error?.response?.data?.error || 'Utilize action failed', 'error');
                     }
                   }}
-                  className={cn("h-9 text-sm rounded px-3", canUtilize ? "bg-emerald-500 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")}
+                  className={cn("h-9 text-sm rounded px-3 w-full md:w-auto", canUtilize ? "bg-emerald-500 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")}
                 >
                   Apply Utilize
                 </button>
-                {selectedUtilizeType === 'convert_assets' && (
-                  <>
-                    <select value={selectedAssetType} onChange={e=>setUtilizeAssetType({ ...utilizeAssetType, [g.id]: e.target.value })} className={cn("h-9 px-3 rounded border text-sm min-w-48", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
-                      <option value="">Select asset type</option>
-                      <option value="Gold">Gold</option>
-                      <option value="Stock">Stock</option>
-                      <option value="Mutual Fund">Mutual Fund</option>
-                      <option value="Fixed Deposit">Fixed Deposit</option>
-                      <option value="Crypto">Crypto</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    <input value={utilizeAssetName[g.id] || ''} onChange={e=>setUtilizeAssetName({ ...utilizeAssetName, [g.id]: e.target.value })} placeholder="Asset name" className={cn("h-9 px-3 rounded border text-sm min-w-52", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
-                  </>
-                )}
-                {selectedUtilizeType === 'buy_things' && (
-                  <input value={utilizeItemName[g.id] || ''} onChange={e=>setUtilizeItemName({ ...utilizeItemName, [g.id]: e.target.value })} placeholder="Item name" className={cn("h-9 px-3 rounded border text-sm min-w-52", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
-                )}
                 <p className="text-xs opacity-70">Utilize uses full saved goal amount automatically.</p>
               </div>
             )}
@@ -1042,7 +1118,7 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
       </div>
 
       <div className={cn("p-4 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">
           <h3 className="text-lg font-semibold">Utilization History</h3>
           <p className="text-sm font-medium">Total Utilized: {curr}{Number(goalUtilizationTotalDeposit || 0).toLocaleString()}</p>
         </div>
@@ -1172,7 +1248,7 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
           <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
 <h2 className="text-xl font-bold mb-4">User Profile & Settings</h2>
              <form onSubmit={handleProfSubmit} className="flex flex-col gap-4"> 
-                 <div className="flex items-center gap-4 mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
                     {profileData.avatar_url && <img src={profileData.avatar_url} className="w-16 h-16 rounded-full object-cover"/>}
                     <label className="bg-slate-200 dark:bg-slate-700 px-4 py-2 cursor-pointer rounded-xl font-medium">Upload Avatar Image<input type="file" className="hidden" accept="image/*" onChange={uploadAva}/></label>
                  </div>
@@ -1195,13 +1271,13 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                      <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="password" placeholder="Recovery answer" value={profileData.recovery_answer || ''} onChange={e=>setProfileData({...profileData, recovery_answer:e.target.value})} />
                      <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="email" placeholder="Recovery Email (alerts)" value={profileData.recovery_email || ''} onChange={e=>setProfileData({...profileData, recovery_email:e.target.value})} />
                  </div>
-                 <div className="flex items-center gap-3">
-                   <button className="bg-emerald-500 text-white rounded p-2 font-bold w-48">Save Settings</button>
+                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                   <button className="bg-emerald-500 text-white rounded p-2 font-bold w-full sm:w-48">Save Settings</button>
                    <button type="button" onClick={downloadBackup} className="bg-indigo-500 text-white rounded p-2 font-bold">Download DB Backup</button>
                    <button type="button" onClick={downloadMonthlyPdf} className="bg-indigo-700 text-white rounded p-2 font-bold">Monthly PDF</button>
                    <button type="button" onClick={downloadTaxExport} className="bg-slate-700 text-white rounded p-2 font-bold">Tax Export</button>
                  </div>
-                 <div className="flex items-center gap-2">
+                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                    <input type="file" accept=".sqlite,.db,.json" onChange={e=>setRestoreFile(e.target.files?.[0] || null)} />
                    <button type="button" onClick={async ()=>{ if (!restoreFile) return; await restoreBackup(restoreFile); alert('Backup restored.'); onRefresh(); }} className="bg-rose-500 text-white rounded p-2 text-sm font-bold">Restore Backup</button>
                  </div>
@@ -1228,7 +1304,7 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
           </div>
 
           <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
               <h2 className="text-xl font-bold">Offline Sync Queue</h2>
               <button onClick={() => { if (!doubleConfirmDelete('offline queue items')) return; clearOfflineQueue(); setOfflineQueueItems([]); setOfflineQueueCount(0); }} className="text-xs px-2 py-1 rounded bg-rose-500 text-white">Clear All</button>
             </div>
@@ -1237,7 +1313,7 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                 <div key={item.local_id} className={cn("p-2 rounded text-xs", darkMode ? "bg-slate-900" : "bg-slate-100")}>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">{item.type.toUpperCase()} {item.id ? `#${item.id}` : ''}</span>
-                    <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap justify-end">
                       <button onClick={() => { retryOfflineQueueItemNow(item.local_id); const q = getOfflineQueueItems(); setOfflineQueueItems(q); setOfflineQueueCount(q.length); }} className="px-2 py-0.5 rounded bg-amber-500 text-white">Retry</button>
                       <button onClick={() => { if (!doubleConfirmDelete('offline queue item')) return; const left = removeOfflineQueueItem(item.local_id); setOfflineQueueItems(getOfflineQueueItems()); setOfflineQueueCount(left); }} className="px-2 py-0.5 rounded bg-slate-600 text-white">Remove</button>
                     </div>
@@ -1255,14 +1331,14 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                   <h2 className="text-xl font-bold mb-4">Accounts</h2>
                   <form onSubmit={handleAddAcc} className="flex flex-col gap-3 mb-6">
                       <input required placeholder="Account Name (e.g. Chase)" value={accName} onChange={e=>setAccName(e.target.value)} className={cn("p-2 border rounded outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
-                      <div className="flex gap-2">
-                        <select value={accType} onChange={e=>setAccType(e.target.value)} className={cn("p-2 border rounded w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}><option>Bank</option><option>Wallet</option><option>Cash</option></select>
-                        <input type="number" placeholder="Starting Balance" value={accBal} onChange={e=>setAccBal(parseFloat(e.target.value))} className={cn("p-2 border rounded w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <select value={accType} onChange={e=>setAccType(e.target.value)} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}><option>Bank</option><option>Wallet</option><option>Cash</option></select>
+                        <input type="number" placeholder="Starting Balance" value={accBal} onChange={e=>setAccBal(parseFloat(e.target.value))} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
                       </div>
                       <button className="bg-emerald-500 text-white rounded p-2">Add Account</button>
                   </form>
                   <div className="flex flex-col gap-2 h-64 overflow-y-auto">
-                            {accounts.map(a => <div key={a.id} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium">{a.name} <span className="opacity-50 text-xs">({a.type})</span></span> <button onClick={async ()=>{ if (!doubleConfirmDelete('account')) return; await deleteAccount(a.id); onRefresh()}} className="text-rose-500"><Trash2 className="w-4 h-4"/></button></div>)}
+                            {accounts.map(a => <div key={a.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium min-w-0 break-words">{a.name} <span className="opacity-50 text-xs">({a.type})</span></span> <button onClick={async ()=>{ if (!doubleConfirmDelete('account')) return; await deleteAccount(a.id); onRefresh()}} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button></div>)}
                   </div>
               </div>
 
@@ -1270,14 +1346,14 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                   <h2 className="text-xl font-bold mb-4">Categories</h2>
                   <form onSubmit={handleAddCat} className="flex flex-col gap-3 mb-6">
                       <input required placeholder="Category Name" value={catName} onChange={e=>setCatName(e.target.value)} className={cn("p-2 border rounded outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
-                      <div className="flex gap-2">
-                        <select value={catType} onChange={e=>setCatType(e.target.value)} className={cn("p-2 border rounded w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}><option>Expense</option><option>Income</option></select>
-                        <input type="number" placeholder="Monthly Budget ($0 for no limit)" value={catBud} onChange={e=>setCatBud(parseFloat(e.target.value))} className={cn("p-2 border rounded w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <select value={catType} onChange={e=>setCatType(e.target.value)} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}><option>Expense</option><option>Income</option></select>
+                        <input type="number" placeholder="Monthly Budget ($0 for no limit)" value={catBud} onChange={e=>setCatBud(parseFloat(e.target.value))} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
                       </div>
                       <button className="bg-emerald-500 text-white rounded p-2">Add Category</button>
                   </form>
                   <div className="flex flex-col gap-2 h-64 overflow-y-auto">
-                      {categories.map(c => <div key={c.id} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium">{c.name} <span className="opacity-50 text-xs">({c.type})</span></span> <button onClick={async ()=>{ if (!doubleConfirmDelete('category')) return; await deleteCategory(c.id); onRefresh()}} className="text-rose-500"><Trash2 className="w-4 h-4"/></button></div>)}
+                        {categories.map(c => <div key={c.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium min-w-0 break-words">{c.name} <span className="opacity-50 text-xs">({c.type})</span></span> <button onClick={async ()=>{ if (!doubleConfirmDelete('category')) return; await deleteCategory(c.id); onRefresh()}} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button></div>)}
                   </div>
               </div>
           </div>
@@ -1342,18 +1418,18 @@ function CalendarView({ transactions, darkMode, curr }) {
    };
    const todayStr = getLocalDateStr(new Date());
 
-   return (
-    <div className="w-full min-h-[600px] h-[calc(100vh-130px)] flex flex-col space-y-3 pb-4">
-          <div className="flex justify-between items-center shrink-0">
+  return (
+   <div className="w-full min-h-[520px] md:min-h-[600px] h-auto md:h-[calc(100vh-130px)] flex flex-col space-y-3 pb-4">
+       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 shrink-0">
              <h2 className="text-2xl font-bold">Calendar</h2>
-             <div className="flex items-center gap-4">
+         <div className="flex items-center gap-2 sm:gap-4">
                  <button onClick={()=>setCurrDate(new Date(currDate.setMonth(currDate.getMonth()-1)))} className="px-4 py-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition">Prev</button>
-                 <span className="font-bold text-lg min-w-32 text-center">{currDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+            <span className="font-bold text-base sm:text-lg min-w-28 sm:min-w-32 text-center">{currDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
                  <button onClick={()=>setCurrDate(new Date(currDate.setMonth(currDate.getMonth()+1)))} className="px-4 py-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition">Next</button>
              </div>
           </div>
           <div className="grid grid-cols-7 gap-1 lg:gap-2 flex-1 auto-rows-fr">
-             {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} className="text-center text-sm font-bold opacity-50 py-1 h-auto flex items-end justify-center">{d}</div>)}
+         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} className="text-center text-[11px] sm:text-sm font-bold opacity-50 py-1 h-auto flex items-end justify-center">{d}</div>)}
              {Array.from({length: new Date(currDate.getFullYear(), currDate.getMonth(), 1).getDay()}).map((_,i)=><div key={`empty-${i}`}/>)}
              {days.map(d => {
                  const dStr = getLocalDateStr(d);
@@ -1363,7 +1439,7 @@ function CalendarView({ transactions, darkMode, curr }) {
                  const expense = dayTxns.filter(t=>t.transaction_type==='Expense').reduce((a,c)=>a+c.amount,0);
                  return (
                      <div key={d.toISOString()} className={cn(
-                         "p-1.5 border rounded-lg flex flex-col justify-start relative group",
+                       "p-1.5 border rounded-lg flex flex-col justify-start relative group min-h-[78px] sm:min-h-[90px]",
                          isToday ? "border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30" : (darkMode?"bg-slate-800 border-slate-700":"bg-white border-slate-200 shadow-sm")
                      )}>
                          {/* Static View Summary */}
@@ -1378,7 +1454,7 @@ function CalendarView({ transactions, darkMode, curr }) {
 
                          {/* Hover View Absolute Overlay (Eliminates Jitter) */}
                          <div className={cn(
-                             "absolute -inset-2 z-50 flex flex-col rounded-xl shadow-2xl p-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 transform scale-95 group-hover:scale-100",
+                           "hidden md:flex absolute -inset-2 z-50 flex-col rounded-xl shadow-2xl p-2 opacity-0 pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto transition-all duration-200 transform scale-95 md:group-hover:scale-100",
                              darkMode ? "bg-slate-700 border border-slate-600" : "bg-white border border-slate-200"
                          )}>
                              <div className={cn("text-right font-bold text-sm shrink-0 mb-1 pb-1 border-b flex justify-between items-center", darkMode ? "border-slate-600" : "border-slate-100")}>
