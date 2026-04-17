@@ -15,7 +15,7 @@ A modern, user-friendly Money Manager application to help you track your income 
 
 ## 📁 Project Structure
 - `/frontend`: Contains all the React client-side code and UI components.
-- `/backend`: Contains the Node.js API server and MongoDB data/migration scripts.
+- `/backend`: Contains the Node.js API server and MongoDB data scripts.
 
 ## 🏁 Getting Started
 
@@ -31,21 +31,6 @@ copy .env.example .env
 node server.js
 ```
 *The backend API will start running on http://localhost:3001*
-
-### Optional: Migrate Existing SQLite Data to MongoDB
-If you want to import old SQLite data into MongoDB:
-
-```bash
-cd backend
-npm install sqlite sqlite3
-set MONGO_URI=mongodb://127.0.0.1:27017/money-manager
-npm run migrate:mongodb
-```
-
-Notes:
-- After migration, you can remove temporary migration deps if desired: `npm uninstall sqlite sqlite3`
-- By default, migration reads `backend/database.sqlite`.
-- You can override SQLite file path using `SQLITE_PATH` env variable.
 
 ### Run Backend (MongoDB)
 MongoDB is the default and only runtime provider:
@@ -73,7 +58,6 @@ Mongo-backed endpoints include:
 - Reports (yearly comparison, tax export, monthly PDF)
 - CSV import/export
 - Backup/restore (JSON)
-- Migration health check (`GET /api/migration/health`)
 
 Mongo backup/restore notes:
 - `GET /api/backup/db` downloads `.json` backup.

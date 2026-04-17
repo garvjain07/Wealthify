@@ -64,15 +64,20 @@ api.interceptors.request.use(config => {
 export const login = (data) => api.post('/login', data);
 export const register = (data) => api.post('/register', data);
 export const getProfile = () => api.get('/user/me');
+export const checkUsernameAvailability = (username) => api.get('/user/username-available', { params: { username } });
 export const updateProfile = (data) => api.put('/user/profile', data);
 export const verifyPin = (pin) => api.post('/user/verify-pin', { pin });
 
 export const getAccounts = () => api.get('/accounts');
 export const addAccount = (data) => api.post('/accounts', data);
+export const editAccount = (id, data) => api.put(`/accounts/${id}`, data);
+export const getAccountDeleteImpact = (id) => api.get(`/accounts/${id}/delete-impact`);
 export const deleteAccount = (id) => api.delete(`/accounts/${id}`);
 
 export const getCategories = () => api.get('/categories');
 export const addCategory = (data) => api.post('/categories', data);
+export const editCategory = (id, data) => api.put(`/categories/${id}`, data);
+export const getCategoryDeleteImpact = (id) => api.get(`/categories/${id}/delete-impact`);
 export const deleteCategory = (id) => api.delete(`/categories/${id}`);
 
 export const getTransactions = (params = {}) => api.get('/transactions', { params });
@@ -237,7 +242,7 @@ export const downloadBackup = () => {
 
 export const restoreBackup = async (file) => {
     const formData = new FormData();
-    formData.append('sqlite', file);
+    formData.append('file', file);
     return api.post('/backup/restore', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 

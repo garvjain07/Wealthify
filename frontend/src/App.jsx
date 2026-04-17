@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { getAccounts, getCategories, getTransactions, addTransaction, editTransaction, deleteTransaction, exportCSV, importCSV, uploadMedia, login, register, addAccount, addCategory, deleteAccount, deleteCategory, getProfile, updateProfile, getSubscriptions, addSubscription, editSubscription, deleteSubscription, getAnalytics, getDebts, addDebt, settleDebt, verifyPin, getInvestments, addInvestment, editInvestment, deleteInvestment, getGoals, getGoalUtilizationHistory, addGoal, editGoal, contributeGoal, withdrawGoal, utilizeGoal, deleteGoal, downloadBackup, getReminders, getForecast, runRecurringAutomation, getNotifications, markNotificationRead, markAllNotificationsRead, clearNotifications, bulkDeleteTransactions, bulkTagTransactions, getYearlyComparison, downloadMonthlyPdf, downloadTaxExport, restoreBackup, closeMonthSnapshot, getSnapshots, getSavedFilters, deleteSmartFilter, resetPin, getTransactionQualityIssues, markTransactionQualityIssueIgnored, getOfflineQueueCount, getOfflineQueueItems, syncOfflineTransactionQueue, removeOfflineQueueItem, clearOfflineQueue, retryOfflineQueueItemNow } from './api';
+import React, { useState, useEffect, useRef } from 'react';
+import { getAccounts, getCategories, getTransactions, addTransaction, editTransaction, deleteTransaction, exportCSV, importCSV, uploadMedia, login, register, addAccount, editAccount, getAccountDeleteImpact, addCategory, editCategory, getCategoryDeleteImpact, deleteAccount, deleteCategory, getProfile, updateProfile, checkUsernameAvailability, getSubscriptions, addSubscription, editSubscription, deleteSubscription, getAnalytics, getDebts, addDebt, settleDebt, verifyPin, getInvestments, addInvestment, editInvestment, deleteInvestment, getGoals, getGoalUtilizationHistory, addGoal, editGoal, contributeGoal, withdrawGoal, utilizeGoal, deleteGoal, downloadBackup, getReminders, getForecast, runRecurringAutomation, getNotifications, markNotificationRead, markAllNotificationsRead, clearNotifications, bulkDeleteTransactions, bulkTagTransactions, getYearlyComparison, downloadMonthlyPdf, downloadTaxExport, restoreBackup, closeMonthSnapshot, getSnapshots, getSavedFilters, deleteSmartFilter, resetPin, getTransactionQualityIssues, markTransactionQualityIssueIgnored, getOfflineQueueCount, getOfflineQueueItems, syncOfflineTransactionQueue, removeOfflineQueueItem, clearOfflineQueue, retryOfflineQueueItemNow } from './api';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ChartTooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Wallet, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Plus, LayoutDashboard, ListOrdered, Download, Moon, Sun, Trash2, Edit2, LogOut, Settings, Upload, Repeat, BarChart2, CalendarClock, FileText, Target, CheckCircle2, TrendingUp, Shield, PiggyBank, Hash, Bell, Search, Filter, Command } from 'lucide-react';
+import { Wallet, User, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Plus, LayoutDashboard, ListOrdered, Download, Moon, Sun, Trash2, Edit2, LogOut, Settings, Upload, Repeat, BarChart2, CalendarClock, FileText, Target, CheckCircle2, TrendingUp, Shield, PiggyBank, Hash, Bell, Search, Filter, Command, ArrowLeftRight } from 'lucide-react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
@@ -16,8 +16,8 @@ function TxFormInput({ darkMode, ...props }) {
   return <input {...props} className={cn("w-full rounded-lg border-0 py-2.5 px-3 ring-1", darkMode ? "bg-slate-900 ring-slate-700" : "bg-white ring-slate-300")} />;
 }
 
-function TxFormSelect({ darkMode, children, ...props }) {
-  return <select {...props} className={cn("w-full rounded-lg border-0 py-2.5 px-3 ring-1", darkMode ? "bg-slate-900 ring-slate-700" : "bg-white ring-slate-300")}>{children}</select>;
+function TxFormSelect({ darkMode, children, className, ...props }) {
+  return <select {...props} className={cn("w-full rounded-lg border-0 py-2.5 px-3 ring-1", darkMode ? "bg-slate-900 ring-slate-700" : "bg-white ring-slate-300", className)}>{children}</select>;
 }
 
 export default function App() {
@@ -249,8 +249,8 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
     <div className={cn("min-h-screen md:h-screen flex", darkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900")}>
       <aside className={cn("w-64 border-r px-3 py-4 flex-col gap-2 hidden md:flex md:sticky md:top-0 md:h-screen md:overflow-y-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
           <div className="flex items-center gap-2 px-2 mb-2">
-           {userProfile.avatar_url ? <img src={userProfile.avatar_url} className="w-10 h-10 rounded-full object-cover"/> : <div className="bg-emerald-500 p-2 rounded-lg"><Wallet className="w-6 h-6 text-white" /></div>}
-            <h1 className="text-lg font-bold">{userProfile.username}'s App</h1>
+           <div className="bg-emerald-500 p-2 rounded-lg"><Wallet className="w-6 h-6 text-white" /></div>
+          <h1 className="text-lg font-bold">Wealthify App</h1>
         </div>
           <nav className="flex flex-col gap-1">
           <NavBtn id="dashboard" icon={LayoutDashboard} label="Dashboard" />
@@ -274,10 +274,10 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         <div className="md:hidden mb-4 space-y-3">
           <div className={cn("p-3 rounded-2xl border flex items-center justify-between", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
             <div className="flex items-center gap-2 min-w-0">
-              {userProfile.avatar_url ? <img src={userProfile.avatar_url} className="w-9 h-9 rounded-full object-cover"/> : <div className="bg-emerald-500 p-2 rounded-lg"><Wallet className="w-4 h-4 text-white" /></div>}
+              <div className="bg-emerald-500 p-2 rounded-lg"><Wallet className="w-4 h-4 text-white" /></div>
               <div className="min-w-0">
                 <p className="text-xs opacity-70">Welcome</p>
-                <p className="text-sm font-bold truncate">{userProfile.username}</p>
+                <p className="text-sm font-bold truncate">Wealthify App</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -431,7 +431,7 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         {activeTab === 'goals' && <GoalsView goals={goals} goalUtilizationItems={goalUtilizationItems} goalUtilizationTotalDeposit={goalUtilizationTotalDeposit} accounts={accounts} curr={curr} onRefresh={fetchData} darkMode={darkMode} />}
         {activeTab === 'debts' && <DebtsView debts={debts} onRefresh={fetchData} darkMode={darkMode} curr={curr} />}
         {activeTab === 'calendar' && <CalendarView transactions={transactions} darkMode={darkMode} curr={curr} />}
-        {activeTab === 'analytics' && <AnalyticsView analytics={analytics} forecast={forecast} yearlyComparison={yearlyComparison} darkMode={darkMode} curr={curr} lazyCharts={lazyCharts} />}
+        {activeTab === 'analytics' && <AnalyticsView analytics={analytics} transactions={transactions} forecast={forecast} yearlyComparison={yearlyComparison} darkMode={darkMode} curr={curr} lazyCharts={lazyCharts} />}
         {activeTab === 'notifications' && <NotificationsView notifications={notifications} darkMode={darkMode} onRefresh={fetchData} />}
         {activeTab === 'settings' && <SettingsView accounts={accounts} categories={categories} onRefresh={fetchData} refreshProfile={refreshProfile} userProfile={userProfile} darkMode={darkMode} snapshots={snapshots} offlineQueueItems={offlineQueueItems} setOfflineQueueItems={setOfflineQueueItems} setOfflineQueueCount={setOfflineQueueCount} />}
 
@@ -485,7 +485,8 @@ function AuthScreen({ onAuth, darkMode }) {
 
 function TransactionView({ transactions, accounts, categories, onRefresh, darkMode, curr, txPage, setTxPage, txPageSize, setTxPageSize, txTotal, savedFilters, qualityIssueMap, qualityDetailsMap, setOfflineQueueCount, setOfflineQueueItems }) {
   const [isOpen, setIsOpen] = useState(false); const [uploading, setUploading] = useState(false); const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '' });
+  const txFormRef = useRef(null);
+  const [formData, setFormData] = useState({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '', payment_mode: '', payment_app: '' });
   const [tagFilter, setTagFilter] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
   const [quickFilter, setQuickFilter] = useState('all');
@@ -494,6 +495,51 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
   const [splitMode, setSplitMode] = useState(false);
   const [splitItems, setSplitItems] = useState([{ category_id: '', amount: 0, tag: '' }, { category_id: '', amount: 0, tag: '' }]);
   const [expandedSplitRows, setExpandedSplitRows] = useState({});
+
+  const selectedSourceAccount = accounts.find((a) => Number(a.id) === Number(formData.account_id));
+  const selectedSourceType = String(selectedSourceAccount?.type || '').toLowerCase();
+  const showPaymentFields = selectedSourceType === 'bank' || selectedSourceType === 'wallet';
+  const normalizedTxType = String(formData.type || '').toLowerCase();
+  const paymentModeOptions = selectedSourceType === 'bank'
+    ? (normalizedTxType === 'transfer'
+      ? ['UPI', 'UPI LITE', 'RTGS', 'IMPS', 'NEFT', 'Check', 'Net Banking']
+      : normalizedTxType === 'income'
+        ? ['Cash Deposit', 'Check', 'UPI', 'IMPS', 'NEFT', 'RTGS', 'Net Banking']
+        : ['Cash Withdraw', 'Check', 'UPI', 'IMPS', 'NEFT', 'RTGS', 'Debit Card', 'Credit Card', 'Net Banking'])
+    : selectedSourceType === 'wallet'
+      ? (normalizedTxType === 'transfer'
+        ? ['UPI', 'UPI LITE', 'Wallet Transfer']
+        : normalizedTxType === 'income'
+          ? ['UPI', 'UPI LITE', 'Wallet Transfer']
+          : ['UPI', 'UPI LITE', 'Wallet Transfer', 'Card', 'Other'])
+      : [];
+  const isUpiMode = ['UPI', 'UPI LITE'].includes(String(formData.payment_mode || ''));
+  const upiAppSuggestions = ['BHIM', 'PhonePe', 'GPay', 'Paytm'];
+  const upiAppSelectValue = upiAppSuggestions.includes(String(formData.payment_app || ''))
+    ? formData.payment_app
+    : '';
+
+  useEffect(() => {
+    if (!showPaymentFields) {
+      setFormData((prev) => ({ ...prev, payment_mode: '', payment_app: '' }));
+      return;
+    }
+    if (formData.payment_mode && !paymentModeOptions.includes(formData.payment_mode)) {
+      setFormData((prev) => ({ ...prev, payment_mode: '', payment_app: '' }));
+    }
+  }, [showPaymentFields, selectedSourceType]);
+
+  useEffect(() => {
+    if (!isUpiMode && formData.payment_app) {
+      setFormData((prev) => ({ ...prev, payment_app: '' }));
+    }
+  }, [isUpiMode, formData.payment_app]);
+
+  useEffect(() => {
+    if (isOpen && editingId && txFormRef.current) {
+      txFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [isOpen, editingId]);
 
   const isProtectedTxn = (tx) => {
       const tag = String(tx?.tag || '').trim().toLowerCase();
@@ -514,7 +560,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
   
   const handleEdit = (tx) => {
       setEditingId(tx.id);
-      setFormData({ type: tx.transaction_type, amount: tx.amount, account_id: tx.account_id || '', to_account_id: tx.to_account_id || '', category_id: tx.category_id || '', date: tx.date || new Date().toISOString().split('T')[0], description: tx.description || '', receipt_url: tx.receipt_url || '', tag: tx.tag || '' });
+      setFormData({ type: tx.transaction_type, amount: tx.amount, account_id: tx.account_id || '', to_account_id: tx.to_account_id || '', category_id: tx.category_id || '', date: tx.date || new Date().toISOString().split('T')[0], description: tx.description || '', receipt_url: tx.receipt_url || '', tag: tx.tag || '', payment_mode: tx.payment_mode || '', payment_app: tx.payment_app || '' });
       if (tx.splits && tx.splits.length > 0) {
         setSplitMode(true);
         setSplitItems(tx.splits.map(s => ({ category_id: s.category_id || '', amount: s.amount, tag: s.tag || '' })));
@@ -527,6 +573,10 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
 
   const submit = async (e) => { 
       e.preventDefault(); 
+      if (formData.type === 'Transfer' && Number(formData.account_id) === Number(formData.to_account_id)) {
+        alert('Source and destination account cannot be the same for transfer.');
+        return;
+      }
       const payload = splitMode && formData.type !== 'Transfer'
         ? { ...formData, split_items: splitItems.filter(s => Number(s.amount) > 0).map(s => ({ ...s, amount: Number(s.amount) })), amount: splitItems.reduce((sum, s) => sum + Number(s.amount || 0), 0) }
         : formData;
@@ -538,15 +588,20 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
         setOfflineQueueItems(getOfflineQueueItems());
       }
       setIsOpen(false); 
-      setFormData({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '' });
+      setFormData({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '', payment_mode: '', payment_app: '' });
       setSplitMode(false);
       setSplitItems([{ category_id: '', amount: 0, tag: '' }, { category_id: '', amount: 0, tag: '' }]);
       onRefresh(); 
   };
   const filteredList = transactions.filter(t => {
-      const hay = `${t.description || ''} ${t.category_name || ''} ${t.account_name || ''} ${t.tag || ''}`.toLowerCase();
+      const hay = `${t.description || ''} ${t.category_name || ''} ${t.account_name || ''} ${t.tag || ''} ${t.payment_mode || ''} ${t.payment_app || ''}`.toLowerCase();
       const matchesText = !searchFilter || hay.includes(searchFilter.toLowerCase());
-      const matchesTag = !tagFilter || (t.tag || '').toLowerCase().includes(tagFilter.toLowerCase()) || (t.splits || []).some(s => (s.tag || '').toLowerCase().includes(tagFilter.toLowerCase()));
+      const tagNeedle = tagFilter.toLowerCase();
+      const matchesTag = !tagFilter
+        || (t.tag || '').toLowerCase().includes(tagNeedle)
+        || (t.payment_mode || '').toLowerCase().includes(tagNeedle)
+        || (t.payment_app || '').toLowerCase().includes(tagNeedle)
+        || (t.splits || []).some(s => (s.tag || '').toLowerCase().includes(tagNeedle));
       const dt = new Date(t.date);
       const now = new Date();
       const weekStart = new Date(now); weekStart.setDate(now.getDate() - 7);
@@ -573,7 +628,9 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
             date: forceDate || t.date,
             description: t.description || '',
             receipt_url: t.receipt_url || null,
-            tag: t.tag || ''
+            tag: t.tag || '',
+            payment_mode: t.payment_mode || '',
+            payment_app: t.payment_app || ''
           };
         }
         if (t.splits && t.splits.length > 0) {
@@ -586,6 +643,8 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
             description: t.description || '',
             receipt_url: t.receipt_url || null,
             tag: t.tag || '',
+            payment_mode: t.payment_mode || '',
+            payment_app: t.payment_app || '',
             split_items: t.splits.map(s => ({ category_id: s.category_id || null, amount: Number(s.amount || 0), tag: s.tag || '' }))
           };
         }
@@ -597,7 +656,9 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
           date: forceDate || t.date,
           description: t.description || '',
           receipt_url: t.receipt_url || null,
-          tag: t.tag || ''
+          tag: t.tag || '',
+          payment_mode: t.payment_mode || '',
+          payment_app: t.payment_app || ''
         };
       };
 
@@ -701,7 +762,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
        </div>
 
        {isOpen && (
-         <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+         <div ref={txFormRef} className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
             <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div><label className="block text-sm mb-2">Type</label><TxFormSelect darkMode={darkMode} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}><option>Expense</option><option>Income</option><option>Transfer</option></TxFormSelect></div>
                 <div><label className="block text-sm mb-2">Amount</label><TxFormInput darkMode={darkMode} type="number" step="0.01" required value={splitMode && formData.type !== 'Transfer' ? splitItems.reduce((sum, s) => sum + Number(s.amount || 0), 0) : formData.amount} onChange={e => setFormData({...formData, amount: parseFloat(e.target.value)})} disabled={splitMode && formData.type !== 'Transfer'} /></div>
@@ -732,24 +793,54 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
                   </div>
                 )}
                  <div className="md:col-span-2"><label className="block text-sm mb-2">Receipt (Image)</label><input type="file" onChange={handleTxFile} /> {uploading && 'Uploading...'} {formData.receipt_url && <a href={formData.receipt_url} className="text-emerald-500">View</a>}</div>
-                 <div className="md:col-span-2 flex justify-stretch md:justify-end"><button type="submit" disabled={uploading} className="bg-emerald-600 text-white px-6 py-2 rounded-xl w-full md:w-auto">Save</button></div>
+                <div className="md:col-span-2 min-h-[64px]">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                    <div className="md:col-span-4 md:max-w-[280px]">
+                      <label className={cn("block text-sm mb-2", !showPaymentFields && "invisible")}>Mode (optional)</label>
+                      <TxFormSelect darkMode={darkMode} aria-label="Mode (optional)" value={showPaymentFields ? (formData.payment_mode || '') : ''} onChange={e => setFormData({ ...formData, payment_mode: e.target.value })} disabled={!showPaymentFields} className={!showPaymentFields ? 'invisible pointer-events-none' : ''}>
+                        <option value="">Select...</option>
+                        {paymentModeOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </TxFormSelect>
+                    </div>
+                    <div className="md:col-span-4 md:max-w-[280px]">
+                      <label className={cn("block text-sm mb-2", !isUpiMode && "invisible")}>App/Instrument Name (optional)</label>
+                      <TxFormSelect darkMode={darkMode} aria-label="App/Instrument Name (optional)" value={isUpiMode ? upiAppSelectValue : ''} onChange={e => {
+                        setFormData({ ...formData, payment_app: e.target.value });
+                      }} disabled={!isUpiMode} className={!isUpiMode ? 'invisible pointer-events-none' : ''}>
+                        <option value="">Select...</option>
+                        {upiAppSuggestions.map((name) => <option key={name} value={name}>{name}</option>)}
+                      </TxFormSelect>
+                    </div>
+                    <div className="md:col-span-4 flex flex-col items-stretch md:items-end">
+                      <label className="block text-sm mb-2 invisible">Save</label>
+                      <button type="submit" disabled={uploading} className="bg-emerald-600 text-white px-6 h-[42px] rounded-xl w-full md:w-auto">Save</button>
+                    </div>
+                  </div>
+                </div>
             </form>
          </div>
        )}
 
            <div className={cn("border text-sm rounded-2xl shadow-sm overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
              <div className="overflow-x-auto">
-             <table className="w-full min-w-[760px] text-left"><thead className={cn("border-b opacity-70", darkMode ? "bg-slate-900 border-slate-700":"bg-slate-50")}><tr><th className="p-4"><input type="checkbox" onChange={(e)=>setSelectedIds(e.target.checked ? filteredList.map(x=>x.id) : [])} checked={filteredList.length > 0 && selectedIds.length === filteredList.length} /></th><th className="p-4">Date</th><th className="p-4">Details</th><th className="p-4">Category</th><th className="p-4 text-right">Amount</th><th className="p-4"></th></tr></thead>
+             <table className="w-full min-w-[900px] text-left"><thead className={cn("border-b opacity-70", darkMode ? "bg-slate-900 border-slate-700":"bg-slate-50")}><tr><th className="p-4"><input type="checkbox" onChange={(e)=>setSelectedIds(e.target.checked ? filteredList.map(x=>x.id) : [])} checked={filteredList.length > 0 && selectedIds.length === filteredList.length} /></th><th className="p-4">Date</th><th className="p-4">Details</th><th className="p-4">Category</th><th className="p-4">Account</th><th className="p-4 text-right">Amount</th><th className="p-4"></th></tr></thead>
             <tbody>
               {filteredList.map(t => (
                   
                   <tr key={t.id} className={cn("border-b border-slate-100 dark:border-slate-800", (qualityIssueMap[t.id] || []).length ? (darkMode ? "bg-amber-900/10" : "bg-amber-50/60") : "")}>
                     <td className="p-4"><input type="checkbox" checked={selectedIds.includes(t.id)} onChange={(e)=>setSelectedIds(prev => e.target.checked ? [...new Set([...prev, t.id])] : prev.filter(id => id !== t.id))} /></td>
-                    <td className="p-4 opacity-70">{t.date}</td><td className="p-4">{t.description} {(t.tag || '').trim() && <span className="ml-2 text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">{t.tag}</span>} {t.receipt_url && <a href={t.receipt_url} className="text-indigo-500 text-xs ml-2">(Img)</a>} {(qualityIssueMap[t.id] || []).length > 0 && <div className="mt-1 text-xs text-amber-600 font-medium">{qualityIssueMap[t.id].join(' • ')}</div>}</td>
+                    <td className="p-4 opacity-70">{t.date}</td><td className="p-4">{t.description} {(t.tag || '').trim() && <span className="ml-2 text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">{t.tag}</span>} {t.payment_mode && <span className="ml-2 text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">{t.payment_mode}</span>} {t.payment_app && <span className="ml-2 text-xs px-2 py-0.5 rounded bg-sky-100 text-sky-700">{t.payment_app}</span>} {t.receipt_url && <a href={t.receipt_url} className="text-indigo-500 text-xs ml-2">(Img)</a>} {(qualityIssueMap[t.id] || []).length > 0 && <div className="mt-1 text-xs text-amber-600 font-medium">{qualityIssueMap[t.id].join(' • ')}</div>}</td>
                     <td className="p-4">{t.transaction_type==='Transfer'?'Transfer':(t.splits && t.splits.length ? `Split (${t.splits.length})` : t.category_name)}
                       {t.splits && t.splits.length > 0 && <div className="mt-1"><button onClick={() => setExpandedSplitRows(prev => ({ ...prev, [t.id]: !prev[t.id] }))} className="text-xs text-indigo-500 font-medium">{expandedSplitRows[t.id] ? 'Hide split details' : 'Show split details'}</button>{expandedSplitRows[t.id] && <div className="text-xs opacity-70 mt-1 space-y-1">{t.splits.map((s, i) => <div key={i}>{s.category_name || 'Uncategorized'}: {curr}{s.amount} {s.tag ? `(${s.tag})` : ''}</div>)}</div>}</div>}
                     </td>
-                    <td className={cn("p-4 text-right font-bold", t.transaction_type==='Income'?"text-emerald-500":t.transaction_type==='Transfer'?"text-blue-500":"text-rose-500")}>{t.transaction_type==='Income'?'+':'-'}{curr}{Math.abs(t.amount)}</td>
+                    <td className="p-4">
+                      {t.transaction_type === 'Transfer'
+                        ? <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-300"><ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />From {t.account_name || 'Unknown'} -&gt; To {t.to_account_name || 'Unknown'}</span>
+                        : t.transaction_type === 'Income'
+                          ? `To ${t.account_name || 'Unknown'}`
+                          : `From ${t.account_name || 'Unknown'}`}
+                    </td>
+                    <td className={cn("p-4 text-right font-bold", t.transaction_type==='Income'?"text-emerald-500":t.transaction_type==='Transfer'?"text-blue-500":"text-rose-500")}>{t.transaction_type==='Transfer' ? <span className="inline-flex items-center gap-1"><ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />{curr}{Math.abs(t.amount)}</span> : <span>{t.transaction_type==='Income'?'+':'-'}{curr}{Math.abs(t.amount)}</span>}</td>
                     <td className="p-4 text-right">
                       {(() => {
                         const isGoalTxn = isProtectedTxn(t);
@@ -787,8 +878,75 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
   );
 }
 
-function AnalyticsView({ analytics, forecast, yearlyComparison, darkMode, curr, lazyCharts }) {
-    if(!analytics.length) return <div className="p-8 text-center">No Data available. Add transactions to see trends.</div>;
+function AnalyticsView({ analytics, transactions, forecast, yearlyComparison, darkMode, curr, lazyCharts }) {
+    const [trendView, setTrendView] = useState('monthly');
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const formatYmd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const getWeekStart = (d) => {
+      const tmp = new Date(d);
+      const day = (tmp.getDay() + 6) % 7;
+      tmp.setDate(tmp.getDate() - day);
+      tmp.setHours(0, 0, 0, 0);
+      return tmp;
+    };
+
+    const txItems = Array.isArray(transactions) ? transactions : [];
+    const chartDataFromTx = txItems.length ? (() => {
+      const buckets = new Map();
+      txItems.forEach((t) => {
+        if (t.transaction_type === 'Transfer') return;
+        const dt = new Date(t.date);
+        if (Number.isNaN(dt.getTime())) return;
+
+        const amount = Math.abs(Number(t.amount || 0));
+        if (!Number.isFinite(amount)) return;
+
+        let key = '';
+        let sortKey = '';
+        if (trendView === 'daily') {
+          key = formatYmd(dt);
+          sortKey = key;
+        } else if (trendView === 'weekly') {
+          const weekStart = getWeekStart(dt);
+          const year = weekStart.getFullYear();
+          const jan1 = new Date(year, 0, 1);
+          const jan1Day = (jan1.getDay() + 6) % 7;
+          const firstWeekStart = new Date(year, 0, 1 - jan1Day);
+          firstWeekStart.setHours(0, 0, 0, 0);
+          const weekNo = Math.floor((weekStart - firstWeekStart) / (7 * 24 * 60 * 60 * 1000)) + 1;
+          key = `${year}-W${pad2(weekNo)}`;
+          sortKey = `${year}-${pad2(weekNo)}`;
+        } else if (trendView === 'yearly') {
+          key = String(dt.getFullYear());
+          sortKey = key;
+        } else {
+          key = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}`;
+          sortKey = key;
+        }
+
+        if (!buckets.has(key)) {
+          buckets.set(key, { period: key, income: 0, expense: 0, sortKey });
+        }
+        const bucket = buckets.get(key);
+        if (t.transaction_type === 'Income') bucket.income += amount;
+        if (t.transaction_type === 'Expense') bucket.expense += amount;
+      });
+
+      return Array.from(buckets.values())
+        .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+        .map(({ sortKey, ...rest }) => rest);
+    })() : [];
+
+    const chartDataFallback = (analytics || []).map((a) => ({
+      period: String(a.month || a.period || a.label || ''),
+      income: Number(a.income || 0),
+      expense: Number(a.expense || 0),
+    }));
+
+    const chartData = chartDataFromTx.length ? chartDataFromTx : chartDataFallback;
+    if (!chartData.length) return <div className="p-8 text-center">No Data available. Add transactions to see trends.</div>;
+
     return (
     <div className="w-full space-y-6">
             <h2 className="text-2xl font-bold">Trends</h2>
@@ -804,17 +962,31 @@ function AnalyticsView({ analytics, forecast, yearlyComparison, darkMode, curr, 
         </div>
       </div>
             <div className={cn("p-6 border rounded-2xl shadow-sm h-[400px]", darkMode ? "bg-slate-800 border-slate-700":"bg-white")}>
+              <div className="mb-4 flex items-center justify-end">
+                <select
+                  value={trendView}
+                  onChange={(e) => setTrendView(e.target.value)}
+                  className={cn("h-9 px-3 rounded-lg border text-sm", darkMode ? "border-slate-700 bg-slate-900" : "border-slate-300 bg-white")}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div className="h-[calc(100%-52px)]">
               {!lazyCharts && <div className="h-full flex items-center justify-center opacity-60">Loading chart...</div>}
               {lazyCharts && <ResponsiveContainer width="100%" height="100%">
-                   <LineChart data={analytics} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                   <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                        <CartesianGrid strokeDasharray="3 3" stroke={darkMode?"#334155":"#e2e8f0"}/>
-                       <XAxis dataKey="month" stroke={darkMode?"#94a3b8":"#64748b"}/>
+                       <XAxis dataKey="period" stroke={darkMode?"#94a3b8":"#64748b"}/>
                        <YAxis stroke={darkMode?"#94a3b8":"#64748b"}/>
                        <ChartTooltip formatter={(value) => `${curr}${value}`} wrapperClassName={darkMode?"dark:bg-slate-800 border-slate-700":""}/>
                        <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={3} />
                        <Line type="monotone" dataKey="expense" stroke="#f43f5e" strokeWidth={3} />
                    </LineChart>
                </ResponsiveContainer>}
+              </div>
             </div>
         </div>
     )
@@ -1225,61 +1397,260 @@ function NotificationsView({ notifications, darkMode, onRefresh }) {
 }
 
 function SettingsView({ accounts, categories, userProfile, refreshProfile, onRefresh, darkMode, snapshots, offlineQueueItems, setOfflineQueueItems, setOfflineQueueCount }) {
-  const [profileData, setProfileData] = useState({ username: userProfile.username || '', password: '', avatar_url: userProfile.avatar_url || '', currency: userProfile.currency || '$', monthly_budget: userProfile.monthly_budget || 0, pin: '', alert_level: userProfile.alert_level || 'all', backup_frequency: userProfile.backup_frequency || 'manual', recovery_question: userProfile.recovery_question || '', recovery_answer: '', recovery_email: userProfile.recovery_email || '' });
-  const [restoreFile, setRestoreFile] = useState(null);
+  const [profileData, setProfileData] = useState({ username: userProfile.username || '', avatar_url: userProfile.avatar_url || '', currency: userProfile.currency || '₹', monthly_budget: userProfile.monthly_budget || 0 });
+  const [usernameStatus, setUsernameStatus] = useState({ checking: false, available: true, message: '' });
   const [pinReset, setPinReset] = useState({ username: userProfile.username || '', recovery_answer: '', new_pin: '' });
 
-  const [accName, setAccName] = useState(''); const [accType, setAccType] = useState('Bank'); const [accBal, setAccBal] = useState(0);
-  const [catName, setCatName] = useState(''); const [catType, setCatType] = useState('Expense'); const [catBud, setCatBud] = useState(0);
+  const [accName, setAccName] = useState(''); const [accType, setAccType] = useState('Bank'); const [accBal, setAccBal] = useState('');
+  const [catName, setCatName] = useState(''); const [catType, setCatType] = useState('Expense'); const [catBud, setCatBud] = useState('');
+  const [editingAccId, setEditingAccId] = useState(null);
+  const [editingCatId, setEditingCatId] = useState(null);
+  const [categoryImpactMap, setCategoryImpactMap] = useState({});
+  const [categoryImpactLoadingMap, setCategoryImpactLoadingMap] = useState({});
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarInputRef = useRef(null);
+
+  const currencyOptions = [
+    { label: 'INR (₹)', value: '₹' },
+    { label: 'USD ($)', value: '$' },
+    { label: 'EUR (€)', value: '€' },
+    { label: 'GBP (£)', value: '£' },
+    { label: 'JPY (¥)', value: '¥' },
+    { label: 'AED (د.إ)', value: 'د.إ' }
+  ];
 
   useEffect(() => {
-      setProfileData(prev => ({ ...prev, username: userProfile.username || '', avatar_url: userProfile.avatar_url || '', currency: userProfile.currency || '$', monthly_budget: userProfile.monthly_budget || 0, alert_level: userProfile.alert_level || 'all', backup_frequency: userProfile.backup_frequency || 'manual', recovery_question: userProfile.recovery_question || '', recovery_email: userProfile.recovery_email || '' }));
+      setProfileData(prev => ({ ...prev, username: userProfile.username || '', avatar_url: userProfile.avatar_url || '', currency: userProfile.currency || '₹', monthly_budget: userProfile.monthly_budget || 0 }));
+      setUsernameStatus({ checking: false, available: true, message: '' });
       setPinReset(prev => ({ ...prev, username: userProfile.username || '' }));
   }, [userProfile]);
 
-  const handleProfSubmit = async (e) => { e.preventDefault(); await updateProfile(profileData); alert("Updated"); refreshProfile(); };
-  const uploadAva = async (e) => { const f = e.target.files[0]; if(f){ const r=await uploadMedia(f); setProfileData({...profileData, avatar_url: r.data.url}); } };
+  useEffect(() => {
+    const nextUsername = String(profileData.username || '').trim();
+    const currentUsername = String(userProfile.username || '').trim();
+
+    if (!nextUsername) {
+      setUsernameStatus({ checking: false, available: false, message: 'Username is required.' });
+      return;
+    }
+
+    if (nextUsername.toLowerCase() === currentUsername.toLowerCase()) {
+      setUsernameStatus({ checking: false, available: true, message: '' });
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setUsernameStatus({ checking: true, available: false, message: 'Checking username...' });
+      try {
+        const res = await checkUsernameAvailability(nextUsername);
+        if (cancelled) return;
+        setUsernameStatus({
+          checking: false,
+          available: !!res.data?.available,
+          message: res.data?.available ? 'Username available.' : 'Username already exists.'
+        });
+      } catch (_) {
+        if (cancelled) return;
+        setUsernameStatus({ checking: false, available: false, message: 'Could not verify username right now.' });
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [profileData.username, userProfile.username]);
+
+  const handleProfSubmit = async (e) => {
+    e.preventDefault();
+    if (usernameStatus.checking) {
+      alert('Please wait. Username availability is being checked.');
+      return;
+    }
+    if (!usernameStatus.available) {
+      alert(usernameStatus.message || 'Please choose a different username.');
+      return;
+    }
+    try {
+      await updateProfile(profileData);
+      alert('Updated');
+      refreshProfile();
+    } catch (e) {
+      alert(e?.response?.data?.error || 'Profile update failed');
+    }
+  };
+  const uploadAva = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const r = await uploadMedia(f);
+      const nextAvatarUrl = r?.data?.url || '';
+      if (!nextAvatarUrl) throw new Error('Upload failed');
+      setProfileData((prev) => ({ ...prev, avatar_url: nextAvatarUrl }));
+      await updateProfile({
+        username: String(userProfile.username || profileData.username || '').trim(),
+        avatar_url: nextAvatarUrl,
+        currency: userProfile.currency || profileData.currency || '₹',
+        monthly_budget: Number(userProfile.monthly_budget || profileData.monthly_budget || 0)
+      });
+      await refreshProfile();
+      alert('Profile picture updated.');
+    } catch (err) {
+      alert(err?.response?.data?.error || 'Profile picture upload failed.');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const removeAvatar = async () => {
+    try {
+      await updateProfile({
+        username: String(userProfile.username || profileData.username || '').trim(),
+        avatar_url: '',
+        currency: userProfile.currency || profileData.currency || '₹',
+        monthly_budget: Number(userProfile.monthly_budget || profileData.monthly_budget || 0)
+      });
+      setProfileData((prev) => ({ ...prev, avatar_url: '' }));
+      setAvatarMenuOpen(false);
+      await refreshProfile();
+      alert('Profile picture removed.');
+    } catch (err) {
+      alert(err?.response?.data?.error || 'Could not remove profile picture.');
+    }
+  };
   
-  const handleAddAcc = async (e) => { e.preventDefault(); await addAccount({name: accName, type: accType, balance: accBal}); onRefresh(); setAccName(''); }
-  const handleAddCat = async (e) => { e.preventDefault(); await addCategory({name: catName, type: catType, monthly_budget: catBud}); onRefresh(); setCatName(''); }
+  const resetAccForm = () => { setEditingAccId(null); setAccName(''); setAccType('Bank'); setAccBal(''); };
+  const resetCatForm = () => { setEditingCatId(null); setCatName(''); setCatType('Expense'); setCatBud(''); };
+
+  const handleAddAcc = async (e) => {
+    e.preventDefault();
+    if (editingAccId) {
+      await editAccount(editingAccId, { name: accName, type: accType });
+    } else {
+      const payload = { name: accName, type: accType, balance: Number(accBal || 0) };
+      await addAccount(payload);
+    }
+    onRefresh();
+    resetAccForm();
+  }
+  const handleAddCat = async (e) => {
+    e.preventDefault();
+    const payload = { name: catName, type: catType, monthly_budget: Number(catBud || 0) };
+    if (editingCatId) await editCategory(editingCatId, payload);
+    else await addCategory(payload);
+    onRefresh();
+    resetCatForm();
+  }
+
+  const startEditAcc = (a) => {
+    setEditingAccId(a.id);
+    setAccName(a.name || '');
+    setAccType(a.type || 'Bank');
+    setAccBal(String(Number(a.balance || 0)));
+  };
+
+  const handleDeleteAcc = async (a) => {
+    try {
+      const impactRes = await getAccountDeleteImpact(a.id);
+      const txCount = Number(impactRes.data?.related_transaction_count || 0);
+      const subCount = Number(impactRes.data?.related_subscription_count || 0);
+      const txLabel = txCount === 1 ? 'transaction entry' : 'transaction entries';
+      const subLine = subCount > 0 ? `\n${subCount} linked subscription${subCount === 1 ? '' : 's'} will also be deleted.` : '';
+      const ok = window.confirm(`Delete account \"${a.name}\"?\n${txCount} related ${txLabel} will be deleted.${subLine}\nThis action cannot be undone.`);
+      if (!ok) return;
+      await deleteAccount(a.id);
+      onRefresh();
+    } catch (e) {
+      alert(e?.response?.data?.error || 'Failed to delete account.');
+    }
+  };
+
+  const startEditCat = (c) => {
+    setEditingCatId(c.id);
+    setCatName(c.name || '');
+    setCatType(c.type || 'Expense');
+    setCatBud(String(Number(c.monthly_budget || 0)));
+  };
+
+  const getOrLoadCategoryImpact = async (categoryId) => {
+    if (categoryImpactMap[categoryId]) return categoryImpactMap[categoryId];
+    if (categoryImpactLoadingMap[categoryId]) return null;
+    try {
+      setCategoryImpactLoadingMap((prev) => ({ ...prev, [categoryId]: true }));
+      const impactRes = await getCategoryDeleteImpact(categoryId);
+      const impact = {
+        related_transaction_count: Number(impactRes.data?.related_transaction_count || 0),
+        related_split_count: Number(impactRes.data?.related_split_count || 0),
+        related_subscription_count: Number(impactRes.data?.related_subscription_count || 0)
+      };
+      setCategoryImpactMap((prev) => ({ ...prev, [categoryId]: impact }));
+      return impact;
+    } catch (_) {
+      return null;
+    } finally {
+      setCategoryImpactLoadingMap((prev) => ({ ...prev, [categoryId]: false }));
+    }
+  };
+
+  const handleDeleteCat = async (c) => {
+    try {
+      const cached = categoryImpactMap[c.id];
+      const impact = cached || await getOrLoadCategoryImpact(c.id);
+      const txCount = Number(impact?.related_transaction_count || 0);
+      const splitCount = Number(impact?.related_split_count || 0);
+      const subCount = Number(impact?.related_subscription_count || 0);
+      const lines = [
+        `Delete category \"${c.name}\"?`,
+        `${txCount} transaction entr${txCount === 1 ? 'y' : 'ies'} will be moved to Other.`,
+        `${splitCount} split entr${splitCount === 1 ? 'y' : 'ies'} will be moved to Other.`
+      ];
+      if (subCount > 0) lines.push(`${subCount} linked subscription${subCount === 1 ? '' : 's'} will be moved to Other.`);
+      lines.push('This action cannot be undone.');
+
+      const ok = window.confirm(lines.join('\n'));
+      if (!ok) return;
+
+      await deleteCategory(c.id);
+      onRefresh();
+    } catch (e) {
+      alert(e?.response?.data?.error || 'Failed to delete category.');
+    }
+  };
 
   return (
       <div className="w-full space-y-8">
           <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
 <h2 className="text-xl font-bold mb-4">User Profile & Settings</h2>
              <form onSubmit={handleProfSubmit} className="flex flex-col gap-4"> 
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-                    {profileData.avatar_url && <img src={profileData.avatar_url} className="w-16 h-16 rounded-full object-cover"/>}
-                    <label className="bg-slate-200 dark:bg-slate-700 px-4 py-2 cursor-pointer rounded-xl font-medium">Upload Avatar Image<input type="file" className="hidden" accept="image/*" onChange={uploadAva}/></label>
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="relative">
+                      <button type="button" onClick={() => setAvatarMenuOpen(v => !v)} className="bg-emerald-500 w-12 h-12 rounded-xl text-white flex items-center justify-center overflow-hidden" title="Profile picture options">
+                        {profileData.avatar_url ? <img src={profileData.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <User className="w-6 h-6" />}
+                      </button>
+                      {avatarMenuOpen && (
+                        <div className={cn("absolute left-0 mt-2 w-52 rounded-xl border shadow-lg z-10", darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200")}>
+                          <button type="button" onClick={() => { setAvatarMenuOpen(false); avatarInputRef.current?.click(); }} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">Set Profile Pic</button>
+                          {!!String(profileData.avatar_url || '').trim() && (
+                            <button type="button" onClick={removeAvatar} className="w-full text-left px-3 py-2 text-sm text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800">Remove Current Profile Pic</button>
+                          )}
+                        </div>
+                      )}
+                      <input ref={avatarInputRef} type="file" className="hidden" accept="image/*" onChange={uploadAva} />
+                    </div>
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} placeholder="Username" value={profileData.username || ''} onChange={e=>setProfileData({...profileData, username:e.target.value})} />
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="password" placeholder="New Password (leave blank to keep current)" value={profileData.password || ''} onChange={e=>setProfileData({...profileData, password:e.target.value})} />       
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} placeholder="Currency Symbol (e.g. $, ₹, €)" value={profileData.currency || '$'} onChange={e=>setProfileData({...profileData, currency:e.target.value})} />
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="number" placeholder="Global Monthly Budget" value={profileData.monthly_budget || ''} onChange={e=>setProfileData({...profileData, monthly_budget:parseFloat(e.target.value)})} />
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="password" maxLength={4} placeholder="Set 4-digit App PIN (optional)" value={profileData.pin || ''} onChange={e=>setProfileData({...profileData, pin:e.target.value})} />
-                     <select className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} value={profileData.alert_level || 'all'} onChange={e=>setProfileData({...profileData, alert_level:e.target.value})}>
-                       <option value="all">Alerts: All</option>
-                       <option value="critical">Alerts: Critical Only</option>
+                     <div>
+                       <input className={cn("w-full p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} placeholder="Username" value={profileData.username || ''} onChange={e=>setProfileData({...profileData, username:e.target.value})} />
+                       {usernameStatus.message && <p className={cn("mt-1 text-xs", usernameStatus.checking ? "text-amber-500" : usernameStatus.available ? "text-emerald-500" : "text-rose-500")}>{usernameStatus.message}</p>}
+                     </div>
+                     <select className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} value={profileData.currency || '₹'} onChange={e=>setProfileData({...profileData, currency:e.target.value})}>
+                       {currencyOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                      </select>
-                     <select className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} value={profileData.backup_frequency || 'manual'} onChange={e=>setProfileData({...profileData, backup_frequency:e.target.value})}>
-                       <option value="manual">Backup: Manual</option>
-                       <option value="daily">Backup: Daily</option>
-                       <option value="weekly">Backup: Weekly</option>
-                     </select>
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} placeholder="Recovery question (PIN reset)" value={profileData.recovery_question || ''} onChange={e=>setProfileData({...profileData, recovery_question:e.target.value})} />
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="password" placeholder="Recovery answer" value={profileData.recovery_answer || ''} onChange={e=>setProfileData({...profileData, recovery_answer:e.target.value})} />
-                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="email" placeholder="Recovery Email (alerts)" value={profileData.recovery_email || ''} onChange={e=>setProfileData({...profileData, recovery_email:e.target.value})} />
+                     <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="number" placeholder="Global Monthly Budget" value={profileData.monthly_budget || ''} onChange={e=>setProfileData({...profileData, monthly_budget:Number(e.target.value || 0)})} />
                  </div>
                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                   <button className="bg-emerald-500 text-white rounded p-2 font-bold w-full sm:w-48">Save Settings</button>
-                   <button type="button" onClick={downloadBackup} className="bg-indigo-500 text-white rounded p-2 font-bold">Download DB Backup</button>
-                   <button type="button" onClick={downloadMonthlyPdf} className="bg-indigo-700 text-white rounded p-2 font-bold">Monthly PDF</button>
-                   <button type="button" onClick={downloadTaxExport} className="bg-slate-700 text-white rounded p-2 font-bold">Tax Export</button>
-                 </div>
-                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                   <input type="file" accept=".sqlite,.db,.json" onChange={e=>setRestoreFile(e.target.files?.[0] || null)} />
-                   <button type="button" onClick={async ()=>{ if (!restoreFile) return; await restoreBackup(restoreFile); alert('Backup restored.'); onRefresh(); }} className="bg-rose-500 text-white rounded p-2 text-sm font-bold">Restore Backup</button>
+                   <button disabled={usernameStatus.checking || !usernameStatus.available} className={cn("text-white rounded p-2 font-bold w-full sm:w-48", usernameStatus.checking || !usernameStatus.available ? "bg-emerald-300 cursor-not-allowed" : "bg-emerald-500")}>Save Settings</button>
                  </div>
              </form>
           </div>
@@ -1298,7 +1669,7 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
             <h2 className="text-xl font-bold mb-4">Month-End Snapshots</h2>
             <button onClick={async()=>{ await closeMonthSnapshot(); alert('Month-end balances frozen.'); onRefresh(); }} className="bg-emerald-500 text-white rounded p-2 text-sm font-bold">Freeze Current Month</button>
             <div className="mt-4 space-y-2 max-h-44 overflow-auto">
-              {snapshots.slice(0, 40).map(s => <div key={s.id} className={cn("p-2 rounded text-sm", darkMode ? "bg-slate-900" : "bg-slate-100")}>{s.snapshot_month} | {s.account_name}: {s.closing_balance}</div>)}
+              {snapshots.slice(0, 40).map(s => <div key={s.id} className={cn("p-2 rounded text-sm", darkMode ? "bg-slate-900" : "bg-slate-100")}>{s.snapshot_month} | {s.account_name}: {Number(s.closing_balance || 0).toFixed(2)}</div>)}
               {snapshots.length === 0 && <div className="text-sm opacity-60">No snapshots yet.</div>}
             </div>
           </div>
@@ -1333,12 +1704,16 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                       <input required placeholder="Account Name (e.g. Chase)" value={accName} onChange={e=>setAccName(e.target.value)} className={cn("p-2 border rounded outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <select value={accType} onChange={e=>setAccType(e.target.value)} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}><option>Bank</option><option>Wallet</option><option>Cash</option></select>
-                        <input type="number" placeholder="Starting Balance" value={accBal} onChange={e=>setAccBal(parseFloat(e.target.value))} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
+                        <input disabled={!!editingAccId} type="number" placeholder="Opening Balance" value={accBal} onChange={e=>setAccBal(e.target.value)} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300", editingAccId && "opacity-60 cursor-not-allowed")}/>
                       </div>
-                      <button className="bg-emerald-500 text-white rounded p-2">Add Account</button>
+                      {editingAccId && <p className="text-xs text-amber-500">Edit mode: account name and type can be changed. Opening balance cannot be changed.</p>}
+                      <div className="flex items-center gap-2">
+                        <button className="bg-emerald-500 text-white rounded p-2 flex-1">{editingAccId ? 'Update Account' : 'Add Account'}</button>
+                        {editingAccId && <button type="button" onClick={resetAccForm} className="bg-slate-300 text-slate-800 rounded p-2 font-medium">Cancel</button>}
+                      </div>
                   </form>
                   <div className="flex flex-col gap-2 h-64 overflow-y-auto">
-                            {accounts.map(a => <div key={a.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium min-w-0 break-words">{a.name} <span className="opacity-50 text-xs">({a.type})</span></span> <button onClick={async ()=>{ if (!doubleConfirmDelete('account')) return; await deleteAccount(a.id); onRefresh()}} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button></div>)}
+                            {accounts.map(a => <div key={a.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium min-w-0 break-words">{a.name} <span className="opacity-50 text-xs">({a.type})</span></span><div className="flex items-center gap-3"><button onClick={()=>startEditAcc(a)} className="text-indigo-500 shrink-0"><Edit2 className="w-4 h-4"/></button><button onClick={()=>handleDeleteAcc(a)} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button></div></div>)}
                   </div>
               </div>
 
@@ -1348,12 +1723,31 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                       <input required placeholder="Category Name" value={catName} onChange={e=>setCatName(e.target.value)} className={cn("p-2 border rounded outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <select value={catType} onChange={e=>setCatType(e.target.value)} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}><option>Expense</option><option>Income</option></select>
-                        <input type="number" placeholder="Monthly Budget ($0 for no limit)" value={catBud} onChange={e=>setCatBud(parseFloat(e.target.value))} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
+                        <input type="number" placeholder="Monthly Budget" value={catBud} onChange={e=>setCatBud(e.target.value)} className={cn("p-2 border rounded w-full sm:w-1/2 outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
                       </div>
-                      <button className="bg-emerald-500 text-white rounded p-2">Add Category</button>
+                      <div className="flex items-center gap-2">
+                        <button className="bg-emerald-500 text-white rounded p-2 flex-1">{editingCatId ? 'Update Category' : 'Add Category'}</button>
+                        {editingCatId && <button type="button" onClick={resetCatForm} className="bg-slate-300 text-slate-800 rounded p-2 font-medium">Cancel</button>}
+                      </div>
                   </form>
                   <div className="flex flex-col gap-2 h-64 overflow-y-auto">
-                        {categories.map(c => <div key={c.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium min-w-0 break-words">{c.name} <span className="opacity-50 text-xs">({c.type})</span></span> <button onClick={async ()=>{ if (!doubleConfirmDelete('category')) return; await deleteCategory(c.id); onRefresh()}} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button></div>)}
+                        {categories.map(c => {
+                          const impact = categoryImpactMap[c.id];
+                          const loadingImpact = !!categoryImpactLoadingMap[c.id];
+                          return (
+                            <div key={c.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded">
+                              <div className="min-w-0">
+                                <span className="font-medium min-w-0 break-words">{c.name} <span className="opacity-50 text-xs">({c.type} | Budget: {Number(c.monthly_budget || 0)})</span></span>
+                                {loadingImpact && <div className="text-[11px] opacity-55 mt-0.5">Checking delete impact...</div>}
+                                {impact && <div className="text-[11px] opacity-65 mt-0.5">Affects: {impact.related_transaction_count} txns, {impact.related_split_count} splits, {impact.related_subscription_count} subsc</div>}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <button onClick={()=>startEditCat(c)} className="text-indigo-500 shrink-0"><Edit2 className="w-4 h-4"/></button>
+                                <button onMouseEnter={() => getOrLoadCategoryImpact(c.id)} onFocus={() => getOrLoadCategoryImpact(c.id)} onClick={()=>handleDeleteCat(c)} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button>
+                              </div>
+                            </div>
+                          );
+                        })}
                   </div>
               </div>
           </div>
@@ -1409,8 +1803,9 @@ function DebtsView({ debts, onRefresh, darkMode, curr }) {
 
 function CalendarView({ transactions, darkMode, curr }) {
    const [currDate, setCurrDate] = useState(new Date());
-   const daysInMonth = new Date(currDate.getFullYear(), currDate.getMonth() + 1, 0).getDate();
-   const days = Array.from({length: daysInMonth}, (_, i) => new Date(currDate.getFullYear(), currDate.getMonth(), i+1));
+  const monthStart = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
+  const gridStart = new Date(currDate.getFullYear(), currDate.getMonth(), 1 - monthStart.getDay());
+  const calendarDays = Array.from({ length: 42 }, (_, i) => new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i));
 
    const getLocalDateStr = (d) => {
        const offset = d.getTimezoneOffset();
@@ -1419,7 +1814,7 @@ function CalendarView({ transactions, darkMode, curr }) {
    const todayStr = getLocalDateStr(new Date());
 
   return (
-   <div className="w-full min-h-[520px] md:min-h-[600px] h-auto md:h-[calc(100vh-130px)] flex flex-col space-y-3 pb-4">
+  <div className="w-full flex flex-col space-y-3 pb-2">
        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 shrink-0">
              <h2 className="text-2xl font-bold">Calendar</h2>
          <div className="flex items-center gap-2 sm:gap-4">
@@ -1428,28 +1823,36 @@ function CalendarView({ transactions, darkMode, curr }) {
                  <button onClick={()=>setCurrDate(new Date(currDate.setMonth(currDate.getMonth()+1)))} className="px-4 py-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition">Next</button>
              </div>
           </div>
-          <div className="grid grid-cols-7 gap-1 lg:gap-2 flex-1 auto-rows-fr">
-         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} className="text-center text-[11px] sm:text-sm font-bold opacity-50 py-1 h-auto flex items-end justify-center">{d}</div>)}
-             {Array.from({length: new Date(currDate.getFullYear(), currDate.getMonth(), 1).getDay()}).map((_,i)=><div key={`empty-${i}`}/>)}
-             {days.map(d => {
+           <div className="grid grid-cols-7 gap-1 lg:gap-2">
+          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} className="text-center text-[11px] sm:text-sm font-bold opacity-50 py-1">{d}</div>)}
+           </div>
+           <div className="grid grid-cols-7 gap-1 lg:gap-2">
+             {calendarDays.map(d => {
                  const dStr = getLocalDateStr(d);
                  const isToday = dStr === todayStr;
+                 const isCurrentMonth = d.getMonth() === currDate.getMonth();
                  const dayTxns = transactions.filter(t => t.date === dStr);
                  const income = dayTxns.filter(t=>t.transaction_type==='Income').reduce((a,c)=>a+c.amount,0);
                  const expense = dayTxns.filter(t=>t.transaction_type==='Expense').reduce((a,c)=>a+c.amount,0);
+                 const transfer = dayTxns.filter(t=>t.transaction_type==='Transfer').reduce((a,c)=>a+c.amount,0);
                  return (
-                     <div key={d.toISOString()} className={cn(
+                     <div key={dStr} className={cn(
                        "p-1.5 border rounded-lg flex flex-col justify-start relative group min-h-[78px] sm:min-h-[90px]",
-                         isToday ? "border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30" : (darkMode?"bg-slate-800 border-slate-700":"bg-white border-slate-200 shadow-sm")
+                         isToday
+                           ? "border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
+                           : isCurrentMonth
+                             ? (darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-sm")
+                             : (darkMode ? "bg-slate-900/60 border-slate-800" : "bg-slate-50 border-slate-200")
                      )}>
                          {/* Static View Summary */}
-                         <div className={cn("text-right font-bold text-sm shrink-0 transition-opacity group-hover:opacity-0 flex justify-end items-center gap-1", isToday ? "text-indigo-600 dark:text-indigo-400" : "opacity-70")}>
+                         <div className={cn("text-right font-bold text-sm shrink-0 transition-opacity group-hover:opacity-0 flex justify-end items-center gap-1", isToday ? "text-indigo-600 dark:text-indigo-400" : isCurrentMonth ? "opacity-70" : "opacity-45")}>
                            {isToday && <span className="text-[9px] px-1 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">Today</span>}
                            <span>{d.getDate()}</span>
                          </div>
                          <div className="text-[10px] leading-tight space-y-0.5 mt-1 overflow-hidden transition-opacity group-hover:opacity-0">
                              {income>0 && <div className="text-emerald-500 font-bold bg-emerald-50 dark:bg-emerald-500/10 px-1 rounded truncate">+{curr}{income}</div>}
                              {expense>0 && <div className="text-rose-500 font-bold bg-rose-50 dark:bg-rose-500/10 px-1 rounded truncate">-{curr}{expense}</div>}
+                             {transfer>0 && <div className="text-blue-500 font-bold bg-blue-50 dark:bg-blue-500/10 px-1 rounded truncate inline-flex items-center gap-1"><ArrowLeftRight className="w-3 h-3 shrink-0" />{curr}{transfer}</div>}
                          </div>
 
                          {/* Hover View Absolute Overlay (Eliminates Jitter) */}
@@ -1467,10 +1870,10 @@ function CalendarView({ transactions, darkMode, curr }) {
                              <div className="flex flex-col text-[10px] leading-tight space-y-1 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar max-h-[150px] pb-1 pr-1">
                                  {dayTxns.length === 0 && <div className="text-center opacity-50 italic py-2">No entries</div>}
                                  {dayTxns.map(t => (
-                                     <div key={t.id} className={cn("px-1.5 py-1 rounded font-medium shrink-0", t.transaction_type==='Income' ? "text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-900/30" : "text-rose-700 bg-rose-50 dark:text-rose-300 dark:bg-rose-900/30")} title={t.description || 'Transaction'}>
+                                   <div key={t.id} className={cn("px-1.5 py-1 rounded font-medium shrink-0", t.transaction_type==='Income' ? "text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-900/30" : t.transaction_type==='Transfer' ? "text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30" : "text-rose-700 bg-rose-50 dark:text-rose-300 dark:bg-rose-900/30")} title={t.description || 'Transaction'}>
                                          <div className="font-bold flex justify-between gap-1 items-start">
                                              <span className="truncate opacity-80 font-normal">{t.description || "Entry"}</span>
-                                             <span className="shrink-0">{t.transaction_type==='Income'?'+':'-'}{curr}{t.amount}</span>
+                                       <span className="shrink-0 inline-flex items-center gap-1">{t.transaction_type==='Transfer' && <ArrowLeftRight className="w-3 h-3 shrink-0" />}{t.transaction_type==='Income'?'+':t.transaction_type==='Transfer'?'':'-'}{curr}{Math.abs(t.amount)}</span>
                                          </div>
                                      </div>
                                  ))}

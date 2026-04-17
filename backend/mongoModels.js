@@ -53,6 +53,8 @@ const models = {
     account_id: { type: Number, required: true },
     to_account_id: Number,
     receipt_url: String,
+    payment_mode: String,
+    payment_app: String,
     created_at: String,
     tag: String
   }), schemaOptions)),
