@@ -8,6 +8,8 @@ import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'da
 
 export function cn(...inputs) { return twMerge(clsx(inputs)) }
 
+const TAB_IDS = ['dashboard', 'transactions', 'subscriptions', 'wealth', 'goals', 'calendar', 'analytics', 'notifications', 'settings'];
+
 function doubleConfirmDelete(entityLabel = 'item') {
   return window.confirm(`Please confirm: delete this ${entityLabel}? This action cannot be undone.`);
 }
@@ -22,13 +24,14 @@ function TxFormSelect({ darkMode, children, className, ...props }) {
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [userProfile, setUserProfile] = useState({});
     const [pinVerified, setPinVerified] = useState(false);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
+    localStorage.setItem('darkMode', darkMode ? 'true' : 'false');
   }, [darkMode]);
 
   const loadProfile = async () => { try { const res = await getProfile(); setUserProfile(res.data); } catch(e) { handleLogout() } };
@@ -61,7 +64,10 @@ export default function App() {
 }
 
 function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile }) {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem('activeTab');
+    return TAB_IDS.includes(savedTab) ? savedTab : 'dashboard';
+  });
   const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -99,6 +105,10 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
   }, []);
 
   useEffect(() => { fetchData(); }, [activeTab, txPage, txPageSize]);
+
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -1709,11 +1719,11 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                       {editingAccId && <p className="text-xs text-amber-500">Edit mode: account name and type can be changed. Opening balance cannot be changed.</p>}
                       <div className="flex items-center gap-2">
                         <button className="bg-emerald-500 text-white rounded p-2 flex-1">{editingAccId ? 'Update Account' : 'Add Account'}</button>
-                        {editingAccId && <button type="button" onClick={resetAccForm} className="bg-slate-300 text-slate-800 rounded p-2 font-medium">Cancel</button>}
+                        {editingAccId && <button type="button" onClick={resetAccForm} className={cn("rounded p-2 font-medium", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-300 text-slate-800")}>Cancel</button>}
                       </div>
                   </form>
                   <div className="flex flex-col gap-2 h-64 overflow-y-auto">
-                            {accounts.map(a => <div key={a.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded"><span className="font-medium min-w-0 break-words">{a.name} <span className="opacity-50 text-xs">({a.type})</span></span><div className="flex items-center gap-3"><button onClick={()=>startEditAcc(a)} className="text-indigo-500 shrink-0"><Edit2 className="w-4 h-4"/></button><button onClick={()=>handleDeleteAcc(a)} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button></div></div>)}
+                            {accounts.map(a => <div key={a.id} className={cn("flex justify-between items-center gap-2 p-3 rounded", darkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900")}><span className="font-medium min-w-0 break-words">{a.name} <span className="opacity-50 text-xs">({a.type})</span></span><div className="flex items-center gap-3"><button onClick={()=>startEditAcc(a)} className="text-indigo-500 shrink-0"><Edit2 className="w-4 h-4"/></button><button onClick={()=>handleDeleteAcc(a)} className="text-rose-500 shrink-0"><Trash2 className="w-4 h-4"/></button></div></div>)}
                   </div>
               </div>
 
@@ -1727,7 +1737,7 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                       </div>
                       <div className="flex items-center gap-2">
                         <button className="bg-emerald-500 text-white rounded p-2 flex-1">{editingCatId ? 'Update Category' : 'Add Category'}</button>
-                        {editingCatId && <button type="button" onClick={resetCatForm} className="bg-slate-300 text-slate-800 rounded p-2 font-medium">Cancel</button>}
+                        {editingCatId && <button type="button" onClick={resetCatForm} className={cn("rounded p-2 font-medium", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-300 text-slate-800")}>Cancel</button>}
                       </div>
                   </form>
                   <div className="flex flex-col gap-2 h-64 overflow-y-auto">
@@ -1735,7 +1745,7 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                           const impact = categoryImpactMap[c.id];
                           const loadingImpact = !!categoryImpactLoadingMap[c.id];
                           return (
-                            <div key={c.id} className="flex justify-between items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded">
+                            <div key={c.id} className={cn("flex justify-between items-center gap-2 p-3 rounded", darkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900")}>
                               <div className="min-w-0">
                                 <span className="font-medium min-w-0 break-words">{c.name} <span className="opacity-50 text-xs">({c.type} | Budget: {Number(c.monthly_budget || 0)})</span></span>
                                 {loadingImpact && <div className="text-[11px] opacity-55 mt-0.5">Checking delete impact...</div>}
