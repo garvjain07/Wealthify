@@ -8,7 +8,7 @@ import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'da
 
 export function cn(...inputs) { return twMerge(clsx(inputs)) }
 
-const TAB_IDS = ['dashboard', 'transactions', 'subscriptions', 'wealth', 'goals', 'calendar', 'analytics', 'notifications', 'settings'];
+const TAB_IDS = ['dashboard', 'transactions', 'activity', 'balances', 'subscriptions', 'wealth', 'goals', 'calendar', 'analytics', 'notifications', 'settings'];
 
 function doubleConfirmDelete(entityLabel = 'item') {
   return window.confirm(`Please confirm: delete this ${entityLabel}? This action cannot be undone.`);
@@ -221,6 +221,8 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
   const mobileTopTabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'transactions', icon: ListOrdered, label: 'Transactions' },
+    { id: 'activity', icon: Hash, label: 'Activity' },
+    { id: 'balances', icon: Landmark, label: 'Balances' },
     { id: 'subscriptions', icon: Repeat, label: 'Subscriptions' },
     { id: 'wealth', icon: TrendingUp, label: 'Wealth' },
     { id: 'goals', icon: PiggyBank, label: 'Goals' },
@@ -232,9 +234,9 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
   const mobileBottomTabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
     { id: 'transactions', icon: ListOrdered, label: 'Txns' },
+    { id: 'balances', icon: Landmark, label: 'Balance' },
     { id: 'wealth', icon: TrendingUp, label: 'Wealth' },
-    { id: 'goals', icon: PiggyBank, label: 'Goals' },
-    { id: 'calendar', icon: CalendarClock, label: 'Calendar' }
+    { id: 'goals', icon: PiggyBank, label: 'Goals' }
   ];
 
     const NavBtn = ({ id, icon: Icon, label }) => (
@@ -265,6 +267,8 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
           <nav className="flex flex-col gap-1">
           <NavBtn id="dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavBtn id="transactions" icon={ListOrdered} label="Transactions" />
+          <NavBtn id="activity" icon={Hash} label="Activity" />
+          <NavBtn id="balances" icon={Landmark} label="Balances" />
           <NavBtn id="subscriptions" icon={Repeat} label="Subscriptions" />
           <NavBtn id="wealth" icon={TrendingUp} label="Wealth" />
           <NavBtn id="goals" icon={PiggyBank} label="Goals" />
@@ -436,6 +440,8 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         )}
 
         {activeTab === 'transactions' && <TransactionView transactions={transactions} accounts={accounts} categories={categories} onRefresh={fetchData} darkMode={darkMode} curr={curr} txPage={txPage} setTxPage={setTxPage} txPageSize={txPageSize} setTxPageSize={setTxPageSize} txTotal={txTotal} savedFilters={savedFilters} qualityIssueMap={qualityIssueMap} qualityDetailsMap={qualityDetailsMap} setOfflineQueueCount={setOfflineQueueCount} setOfflineQueueItems={setOfflineQueueItems} />}
+        {activeTab === 'activity' && <ActivityView transactions={transactions} notifications={notifications} reminders={reminders} goals={goals} investments={investments} goalUtilizationItems={goalUtilizationItems} curr={curr} darkMode={darkMode} />}
+        {activeTab === 'balances' && <BalancesView accounts={accounts} curr={curr} darkMode={darkMode} />}
         {activeTab === 'subscriptions' && <SubscriptionsView subs={subscriptions} accounts={accounts} categories={categories} onRefresh={fetchData} darkMode={darkMode} curr={curr} />}
         {activeTab === 'wealth' && <WealthView investments={investments} accounts={accounts} curr={curr} onRefresh={fetchData} darkMode={darkMode} />}
         {activeTab === 'goals' && <GoalsView goals={goals} goalUtilizationItems={goalUtilizationItems} goalUtilizationTotalDeposit={goalUtilizationTotalDeposit} accounts={accounts} curr={curr} onRefresh={fetchData} darkMode={darkMode} />}
@@ -1071,6 +1077,56 @@ function SubscriptionsView({ subs, categories, accounts, onRefresh, darkMode, cu
    )
 }
 
+function BalancesView({ accounts, curr, darkMode }) {
+  const groups = [
+    { key: 'Bank', label: 'Bank Accounts', empty: 'No bank account added.' },
+    { key: 'Wallet', label: 'Wallets', empty: 'No wallet added.' },
+    { key: 'Cash', label: 'Cash', empty: 'No cash account added.' }
+  ];
+
+  const grandTotal = accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+
+  return (
+    <div className="w-full space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold">Balances</h2>
+        <div className={cn("px-4 py-2 rounded-xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+          <p className="text-xs opacity-70">Total Balance</p>
+          <p className="text-xl font-bold">{curr}{grandTotal.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {groups.map((group) => {
+          const groupAccounts = accounts.filter((account) => account.type === group.key);
+          const groupTotal = groupAccounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+
+          return (
+            <div key={group.key} className={cn("rounded-2xl border p-4", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+              <div className="mb-3">
+                <p className="text-base font-semibold">{group.label}</p>
+                <p className="text-sm opacity-75">Total: {curr}{groupTotal.toLocaleString()}</p>
+              </div>
+
+              <div className="space-y-2">
+                {groupAccounts.map((account) => (
+                  <div key={account.id} className={cn("rounded-xl p-3 flex items-center justify-between", darkMode ? "bg-slate-900" : "bg-slate-50")}>
+                    <p className="font-medium break-words pr-3">{account.name}</p>
+                    <p className={cn("font-bold shrink-0", Number(account.balance || 0) >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                      {curr}{Number(account.balance || 0).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+                {groupAccounts.length === 0 && <p className="text-sm opacity-60">{group.empty}</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function WealthView({ investments, accounts, curr, onRefresh, darkMode }) {
   const [form, setForm] = useState({ id: null, name: '', type: 'Stock', current_value: '', cost_basis: '', date: new Date().toISOString().split('T')[0], notes: '' });
   const totalAssets = accounts.reduce((s, a) => s + Number(a.balance || 0), 0) + investments.reduce((s, i) => s + Number(i.current_value || 0), 0);
@@ -1367,6 +1423,166 @@ function QuickAddModal({ accounts, categories, onClose, onSaved, darkMode, setOf
           <input placeholder="Description" value={form.description} onChange={e=>setForm({...form, description: e.target.value})} className={cn("p-2 rounded border", darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-300")} />
           <button className="md:col-span-2 bg-emerald-500 text-white py-2 rounded-lg font-bold">Save</button>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function ActivityView({ transactions, notifications, reminders, goals, investments, goalUtilizationItems, curr, darkMode }) {
+  const [kindFilter, setKindFilter] = useState('all');
+  const [rangeFilter, setRangeFilter] = useState('all');
+
+  const txActivity = transactions.map((tx) => ({
+    key: `tx-${tx.id}`,
+    kind: 'transaction',
+    level: tx.transaction_type === 'Expense' ? 'expense' : 'info',
+    message: `${tx.transaction_type}: ${curr}${Number(tx.amount || 0).toLocaleString()} ${tx.category_name ? `in ${tx.category_name}` : ''}`.trim(),
+    detail: `${tx.account_name || 'Unknown account'}${tx.description ? ` | ${tx.description}` : ''}`,
+    at: tx.created_at || tx.updated_at || tx.date || null
+  }));
+
+  const notificationActivity = notifications.map((n) => ({
+    key: `noti-${n.id}`,
+    kind: 'notification',
+    level: n.level || 'info',
+    message: n.message || 'Notification',
+    detail: n.is_read ? 'Read' : 'Unread',
+    at: n.created_at || null
+  }));
+
+  const reminderActivity = reminders.map((r, idx) => ({
+    key: `rem-${r.id || idx}`,
+    kind: 'reminder',
+    level: r.level || 'warning',
+    message: r.message || 'Reminder',
+    detail: r.type ? `Type: ${r.type}` : 'Scheduled reminder',
+    at: r.next_date || r.date || null
+  }));
+
+  const goalActivity = goals.map((goal) => {
+    const createdAt = goal.created_at || goal.createdAt || null;
+    const updatedAt = goal.updated_at || goal.updatedAt || null;
+    const action = createdAt && updatedAt && new Date(updatedAt).getTime() > new Date(createdAt).getTime() ? 'updated' : 'tracked';
+    return {
+      key: `goal-${goal.id}`,
+      kind: 'goal',
+      level: goal.status === 'Completed' ? 'success' : 'info',
+      message: `Goal ${action}: ${goal.title || 'Untitled goal'}`,
+      detail: `Saved ${curr}${Number(goal.saved_amount || 0).toLocaleString()} / ${curr}${Number(goal.target_amount || 0).toLocaleString()}${goal.status ? ` | ${goal.status}` : ''}`,
+      at: updatedAt || createdAt || goal.due_date || null
+    };
+  });
+
+  const investmentActivity = investments.map((asset) => {
+    const createdAt = asset.created_at || asset.createdAt || null;
+    const updatedAt = asset.updated_at || asset.updatedAt || null;
+    const action = createdAt && updatedAt && new Date(updatedAt).getTime() > new Date(createdAt).getTime() ? 'updated' : 'added';
+    return {
+      key: `asset-${asset.id}`,
+      kind: 'asset',
+      level: 'info',
+      message: `Asset ${action}: ${asset.name || 'Unnamed asset'}`,
+      detail: `${asset.type || 'Other'} | Invested ${curr}${Number(asset.cost_basis || 0).toLocaleString()} | Current ${curr}${Number(asset.current_value || 0).toLocaleString()}`,
+      at: updatedAt || createdAt || asset.date || null
+    };
+  });
+
+  const goalUtilizationActivity = goalUtilizationItems.map((item) => ({
+    key: `goal-util-${item.id}`,
+    kind: 'goal-utilization',
+    level: 'success',
+    message: `Goal utilized: ${item.goal_title || 'Goal'}`,
+    detail: `${item.utilize_mode === 'convert_assets' ? `Converted to asset ${item.asset_name || '-'}${item.asset_type ? ` (${item.asset_type})` : ''}` : item.utilize_mode === 'buy_things' ? `Bought ${item.item_name || 'item'}` : `Deposited to ${item.resolved_account_name || item.account_name || 'account'}`} | ${curr}${Number(item.amount || 0).toLocaleString()}`,
+    at: item.created_at || null
+  }));
+
+  const activities = [...txActivity, ...notificationActivity, ...reminderActivity, ...goalActivity, ...investmentActivity, ...goalUtilizationActivity]
+    .sort((a, b) => {
+      const aTime = a.at ? new Date(a.at).getTime() : 0;
+      const bTime = b.at ? new Date(b.at).getTime() : 0;
+      return bTime - aTime;
+    });
+
+  const matchesDateRange = (activityDate) => {
+    if (rangeFilter === 'all') return true;
+    if (!activityDate) return false;
+    const activityTime = new Date(activityDate).getTime();
+    if (Number.isNaN(activityTime)) return false;
+
+    const now = new Date();
+    const start = new Date(now);
+    if (rangeFilter === 'today') {
+      start.setHours(0, 0, 0, 0);
+    } else if (rangeFilter === '7d') {
+      start.setDate(now.getDate() - 7);
+    } else if (rangeFilter === '30d') {
+      start.setDate(now.getDate() - 30);
+    }
+    return activityTime >= start.getTime();
+  };
+
+  const filteredActivities = activities.filter((item) => {
+    const kindMatches = kindFilter === 'all' || item.kind === kindFilter;
+    return kindMatches && matchesDateRange(item.at);
+  });
+
+  const formatActivityTimestamp = (value) => {
+    if (!value) return 'No date';
+    const raw = String(value);
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(raw);
+    if (isDateOnly) {
+      const [y, m, d] = raw.split('-').map(Number);
+      return new Date(y, (m || 1) - 1, d || 1).toLocaleDateString();
+    }
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return raw;
+    return parsed.toLocaleString();
+  };
+
+  return (
+    <div className="w-full space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold">Activity</h2>
+          <p className="text-sm opacity-70">All recent transactions, reminders, notifications, goals and assets.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <select value={kindFilter} onChange={(e) => setKindFilter(e.target.value)} className={cn("px-3 py-2 rounded-lg text-sm border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-300")}>
+            <option value="all">All Types</option>
+            <option value="goal">Only Goals</option>
+            <option value="asset">Only Assets</option>
+            <option value="transaction">Only Transactions</option>
+            <option value="notification">Only Notifications</option>
+            <option value="reminder">Only Reminders</option>
+            <option value="goal-utilization">Only Goal Utilization</option>
+          </select>
+          <select value={rangeFilter} onChange={(e) => setRangeFilter(e.target.value)} className={cn("px-3 py-2 rounded-lg text-sm border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-300")}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+          <div className={cn("px-3 py-2 rounded-lg text-sm", darkMode ? "bg-slate-800" : "bg-slate-100")}>
+            Total: {filteredActivities.length}
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("rounded-2xl border overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+        {filteredActivities.map((item) => (
+          <div key={item.key} className={cn("p-4 border-b flex items-start justify-between gap-4", darkMode ? "border-slate-700" : "border-slate-100")}>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className={cn("text-xs px-2 py-0.5 rounded-full", item.kind === 'transaction' ? "bg-indigo-100 text-indigo-700" : item.kind === 'reminder' ? "bg-amber-100 text-amber-700" : item.kind === 'goal' ? "bg-emerald-100 text-emerald-700" : item.kind === 'asset' ? "bg-violet-100 text-violet-700" : item.kind === 'goal-utilization' ? "bg-teal-100 text-teal-700" : "bg-sky-100 text-sky-700")}>{item.kind}</span>
+                <span className={cn("text-xs px-2 py-0.5 rounded-full", item.level === 'expense' ? "bg-rose-100 text-rose-700" : item.level === 'warning' ? "bg-amber-100 text-amber-700" : item.level === 'success' ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700")}>{item.level}</span>
+              </div>
+              <p className="text-sm font-medium break-words">{item.message}</p>
+              <p className="text-xs opacity-70 mt-1 break-words">{item.detail}</p>
+            </div>
+            <p className="text-xs opacity-60 shrink-0">{formatActivityTimestamp(item.at)}</p>
+          </div>
+        ))}
+        {filteredActivities.length === 0 && <p className="p-6 text-center opacity-60">No activity found for selected filters.</p>}
       </div>
     </div>
   );

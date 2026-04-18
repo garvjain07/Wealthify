@@ -93,7 +93,9 @@ const models = {
     current_value: { type: Number, default: 0 },
     cost_basis: { type: Number, default: 0 },
     date: String,
-    notes: String
+    notes: String,
+    created_at: String,
+    updated_at: String
   }), schemaOptions)),
 
   Goal: mongoose.model('Goal', new mongoose.Schema(withId({
@@ -102,7 +104,9 @@ const models = {
     target_amount: { type: Number, required: true },
     saved_amount: { type: Number, default: 0 },
     due_date: String,
-    status: { type: String, default: 'Active' }
+    status: { type: String, default: 'Active' },
+    created_at: String,
+    updated_at: String
   }), schemaOptions)),
 
   GoalUtilizationHistory: mongoose.model('GoalUtilizationHistory', new mongoose.Schema(withId({

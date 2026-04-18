@@ -1440,9 +1440,10 @@ app.get('/api/investments', async (req, res) => {
 
 app.post('/api/investments', async (req, res) => {
     const { name, type, current_value, cost_basis, date, notes } = req.body;
+    const nowIso = new Date().toISOString();
     let investmentDate = date;
     if (!investmentDate) {
-        investmentDate = new Date().toISOString().split('T')[0];
+        investmentDate = nowIso.split('T')[0];
     }
     const id = await getNextId('investments');
     await models.Investment.create({
@@ -1453,20 +1454,23 @@ app.post('/api/investments', async (req, res) => {
         current_value: current_value || 0,
         cost_basis: cost_basis || 0,
         date: investmentDate,
-        notes: notes || null
+        notes: notes || null,
+        created_at: nowIso,
+        updated_at: nowIso
     });
     return res.status(201).json({ id });
 });
 
 app.put('/api/investments/:id', async (req, res) => {
     const { name, type, current_value, cost_basis, date, notes } = req.body;
+    const nowIso = new Date().toISOString();
     let investmentDate = date;
     if (!investmentDate) {
-        investmentDate = new Date().toISOString().split('T')[0];
+        investmentDate = nowIso.split('T')[0];
     }
     await models.Investment.updateOne(
         { id: Number(req.params.id), user_id: req.user.id },
-        { $set: { name, type, current_value: current_value || 0, cost_basis: cost_basis || 0, date: investmentDate, notes: notes || null } }
+        { $set: { name, type, current_value: current_value || 0, cost_basis: cost_basis || 0, date: investmentDate, notes: notes || null, updated_at: nowIso } }
     );
     return res.json({ success: true });
 });
@@ -1497,8 +1501,9 @@ app.post('/api/goals', async (req, res) => {
     const { title, target_amount, due_date } = req.body;
     const targetAmount = Number(target_amount || 0);
     if (targetAmount <= 0) return res.status(400).json({ error: 'Target amount must be greater than zero' });
+    const nowIso = new Date().toISOString();
     const id = await getNextId('goals');
-    await models.Goal.create({ id, user_id: req.user.id, title, target_amount: targetAmount, saved_amount: 0, due_date: due_date || null, status: 'Active' });
+    await models.Goal.create({ id, user_id: req.user.id, title, target_amount: targetAmount, saved_amount: 0, due_date: due_date || null, status: 'Active', created_at: nowIso, updated_at: nowIso });
     return res.status(201).json({ id });
 });
 
@@ -1512,6 +1517,7 @@ app.put('/api/goals/:id', async (req, res) => {
     goal.target_amount = targetAmount;
     goal.due_date = due_date || null;
     goal.status = Number(goal.saved_amount || 0) >= targetAmount ? 'Completed' : 'Active';
+    goal.updated_at = new Date().toISOString();
     await goal.save();
     return res.json({ success: true });
 });
@@ -1530,6 +1536,7 @@ app.put('/api/goals/:id/contribute', async (req, res) => {
 
     goal.saved_amount = Number(goal.saved_amount || 0) + contributeAmount;
     goal.status = Number(goal.saved_amount || 0) >= Number(goal.target_amount || 0) ? 'Completed' : 'Active';
+    goal.updated_at = new Date().toISOString();
     account.balance = Number(account.balance || 0) - contributeAmount;
     await goal.save();
     await account.save();
@@ -1564,6 +1571,7 @@ app.put('/api/goals/:id/withdraw', async (req, res) => {
 
     goal.saved_amount = Number(goal.saved_amount || 0) - withdrawAmount;
     goal.status = Number(goal.saved_amount || 0) >= Number(goal.target_amount || 0) ? 'Completed' : 'Active';
+    goal.updated_at = new Date().toISOString();
     account.balance = Number(account.balance || 0) + withdrawAmount;
     await goal.save();
     await account.save();
@@ -1617,7 +1625,9 @@ app.post('/api/goals/:id/utilize', async (req, res) => {
                 current_value: utilizeAmount,
                 cost_basis: utilizeAmount,
                 date: new Date().toISOString().split('T')[0],
-                notes: `Created from goal utilization: ${goal.title}`
+                notes: `Created from goal utilization: ${goal.title}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             });
         }
 
