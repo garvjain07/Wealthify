@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getAccounts, getCategories, getTransactions, addTransaction, editTransaction, deleteTransaction, exportCSV, importCSV, uploadMedia, login, register, addAccount, editAccount, getAccountDeleteImpact, addCategory, editCategory, getCategoryDeleteImpact, deleteAccount, deleteCategory, getProfile, updateProfile, checkUsernameAvailability, getSubscriptions, addSubscription, editSubscription, deleteSubscription, getAnalytics, getDebts, addDebt, settleDebt, verifyPin, getInvestments, addInvestment, editInvestment, deleteInvestment, getGoals, getGoalUtilizationHistory, addGoal, editGoal, contributeGoal, withdrawGoal, utilizeGoal, deleteGoal, downloadBackup, getReminders, getForecast, runRecurringAutomation, getNotifications, markNotificationRead, markAllNotificationsRead, clearNotifications, bulkDeleteTransactions, bulkTagTransactions, getYearlyComparison, downloadMonthlyPdf, downloadTaxExport, restoreBackup, closeMonthSnapshot, getSnapshots, getSavedFilters, deleteSmartFilter, resetPin, getTransactionQualityIssues, markTransactionQualityIssueIgnored, getOfflineQueueCount, getOfflineQueueItems, syncOfflineTransactionQueue, removeOfflineQueueItem, clearOfflineQueue, retryOfflineQueueItemNow } from './api';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ChartTooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Wallet, User, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Plus, LayoutDashboard, ListOrdered, Download, Moon, Sun, Trash2, Edit2, LogOut, Settings, Upload, Repeat, BarChart2, CalendarClock, CalendarDays, FileText, Target, CheckCircle2, TrendingUp, Shield, PiggyBank, Hash, Bell, Search, Filter, Command, ArrowLeftRight, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Wallet, User, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Plus, LayoutDashboard, ListOrdered, Download, Moon, Sun, Trash2, Edit2, LogOut, Settings, Upload, Repeat, BarChart2, CalendarClock, CalendarDays, FileText, Target, CheckCircle2, TrendingUp, Shield, PiggyBank, Hash, Bell, Search, Filter, Command, ArrowLeftRight, RefreshCw, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
@@ -219,6 +219,7 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
     }, {})).map(([name, value]) => ({ name, value }));
 
   const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981'];
+  const PIE_SLICE_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#06b6d4', '#f43f5e', '#84cc16'];
   const getIcon = (type) => type==='Bank' ? <Landmark className="w-5 h-5 text-blue-500" /> : type==='Wallet' ? <Wallet className="w-5 h-5 text-purple-500" /> : <Banknote className="w-5 h-5 text-emerald-500" />;
   const mobileBottomTabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
@@ -387,7 +388,7 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
                       {expData.length > 0 ? (
                         <div className="flex-1 min-h-0 w-full">
                            <ResponsiveContainer width="100%" height="100%">
-                            <PieChart><Pie data={expData} cx="50%" cy="52%" innerRadius="54%" outerRadius="78%" paddingAngle={2} dataKey="value">{expData.map((e, idx) => (<Cell key={`cell-${idx}`} fill={["#f24848", "#ef4444", "#fb7185", "#f87171", "#dc2626"][idx % 5]} />))}</Pie><ChartTooltip formatter={(v) => `${curr}${v}`} /></PieChart>
+                            <PieChart tabIndex={-1} rootTabIndex={-1} accessibilityLayer={false} style={{ outline: 'none' }}><Pie data={expData} cx="50%" cy="52%" innerRadius="54%" outerRadius="78%" paddingAngle={2} dataKey="value">{expData.map((e, idx) => (<Cell key={`cell-${idx}`} fill={PIE_SLICE_COLORS[idx % PIE_SLICE_COLORS.length]} />))}</Pie><ChartTooltip formatter={(v) => `${curr}${v}`} /></PieChart>
                            </ResponsiveContainer>
                         </div>
                     ) : <div className="flex-1 min-h-0 flex items-center justify-center opacity-50 text-sm">No expenses.</div>}
@@ -398,9 +399,9 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
                     {incData.length > 0 ? (
                       <div className="flex-1 min-h-0 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
+                          <PieChart tabIndex={-1} rootTabIndex={-1} accessibilityLayer={false} style={{ outline: 'none' }}>
                             <Pie data={incData} cx="50%" cy="52%" innerRadius="54%" outerRadius="78%" paddingAngle={2} dataKey="value">
-                              {incData.map((e, idx) => (<Cell key={`inc-cell-${idx}`} fill={["#eab308", "#facc15", "#f59e0b", "#fbbf24", "#ca8a04"][idx % 5]} />))}
+                              {incData.map((e, idx) => (<Cell key={`inc-cell-${idx}`} fill={PIE_SLICE_COLORS[idx % PIE_SLICE_COLORS.length]} />))}
                             </Pie>
                             <ChartTooltip formatter={(v) => `${curr}${v}`} />
                           </PieChart>
@@ -471,7 +472,7 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         {activeTab === 'activity' && <ActivityView transactions={transactions} notifications={notifications} reminders={reminders} goals={goals} investments={investments} goalUtilizationItems={goalUtilizationItems} curr={curr} darkMode={darkMode} />}
         {activeTab === 'balances' && <BalancesView accounts={accounts} curr={curr} darkMode={darkMode} />}
         {activeTab === 'subscriptions' && <SubscriptionsView subs={subscriptions} accounts={accounts} categories={categories} onRefresh={fetchData} darkMode={darkMode} curr={curr} />}
-        {activeTab === 'wealth' && <WealthView investments={investments} accounts={accounts} curr={curr} onRefresh={fetchData} darkMode={darkMode} />}
+        {activeTab === 'wealth' && <WealthView investments={investments} accounts={accounts} goals={goals} curr={curr} onRefresh={fetchData} darkMode={darkMode} />}
         {activeTab === 'goals' && <GoalsView goals={goals} goalUtilizationItems={goalUtilizationItems} goalUtilizationTotalDeposit={goalUtilizationTotalDeposit} accounts={accounts} curr={curr} onRefresh={fetchData} darkMode={darkMode} />}
         {activeTab === 'debts' && <DebtsView debts={debts} onRefresh={fetchData} darkMode={darkMode} curr={curr} />}
         {activeTab === 'calendar' && <CalendarView transactions={transactions} darkMode={darkMode} curr={curr} />}
@@ -481,14 +482,16 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
 
         {showQuickAdd && <QuickAddModal accounts={accounts} categories={categories} onClose={() => setShowQuickAdd(false)} onSaved={fetchData} darkMode={darkMode} setOfflineQueueCount={setOfflineQueueCount} />}
 
-        <button
-          type="button"
-          onClick={() => setShowQuickAdd(true)}
-          aria-label="Quick add"
-          className="md:hidden fixed right-5 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 h-12 w-12 rounded-full bg-emerald-500 text-white shadow-xl inline-flex items-center justify-center"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
+        {activeTab === 'dashboard' && (
+          <button
+            type="button"
+            onClick={() => setShowQuickAdd(true)}
+            aria-label="Quick add"
+            className="md:hidden fixed right-5 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 h-12 w-12 rounded-full bg-emerald-500 text-white shadow-xl inline-flex items-center justify-center"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        )}
 
         <div className="md:hidden fixed bottom-3 left-3 right-3 z-30 mobile-bottom-nav-enter">
           <div className={cn("rounded-3xl border px-2 py-2 shadow-2xl backdrop-blur", darkMode ? "bg-slate-900/95 border-slate-700" : "bg-white/95 border-slate-200") }>
@@ -1314,13 +1317,49 @@ function BalancesView({ accounts, curr, darkMode }) {
   );
 }
 
-function WealthView({ investments, accounts, curr, onRefresh, darkMode }) {
+function WealthView({ investments, accounts, goals, curr, onRefresh, darkMode }) {
   const [form, setForm] = useState({ id: null, name: '', type: 'Stock', current_value: '', cost_basis: '', date: new Date().toISOString().split('T')[0], notes: '' });
-  const totalAssets = accounts.reduce((s, a) => s + Number(a.balance || 0), 0) + investments.reduce((s, i) => s + Number(i.current_value || 0), 0);
+  const [mobileFormOpen, setMobileFormOpen] = useState(false);
+  const mobileHeaderRef = useRef(null);
+  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(0);
+  const totalBankBalance = accounts.reduce((s, a) => s + Number(a.balance || 0), 0);
+  const totalCurrentValue = investments.reduce((s, i) => s + Number(i.current_value || 0), 0);
+  const totalGoalSaving = (goals || []).reduce((s, g) => s + Number(g.saved_amount || 0), 0);
+  const totalAssets = totalBankBalance + totalCurrentValue + totalGoalSaving;
   const totalInvested = investments.reduce((s, i) => s + Number(i.cost_basis || 0), 0);
+  const totalPnL = totalCurrentValue - totalInvested;
+  const mobileHeaderTop = 78;
+  const mobileMaskTop = 0;
+  const mobileMaskHeight = mobileHeaderHeight > 0 ? mobileHeaderTop + mobileHeaderHeight + 2 : 248;
+  const mobileListSpacer = mobileHeaderHeight > 0 ? mobileHeaderHeight + 2 : 168;
+
+  useEffect(() => {
+    const node = mobileHeaderRef.current;
+    if (!node) return;
+
+    const updateHeight = () => {
+      const next = Math.ceil(node.getBoundingClientRect().height || 0);
+      setMobileHeaderHeight((prev) => (prev !== next ? next : prev));
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+
+    let observer;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(updateHeight);
+      observer.observe(node);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+      if (observer) observer.disconnect();
+    };
+  }, [darkMode, totalAssets, totalInvested, totalPnL]);
 
   const startEdit = (i) => {
     setForm({ id: i.id, name: i.name, type: i.type, current_value: i.current_value, cost_basis: i.cost_basis, date: i.date || new Date().toISOString().split('T')[0], notes: i.notes || '' });
+    setMobileFormOpen(true);
   };
 
   const handleSub = async (e) => {
@@ -1331,16 +1370,76 @@ function WealthView({ investments, accounts, curr, onRefresh, darkMode }) {
       await addInvestment(form);
     }
     setForm({ id: null, name: '', type: 'Stock', current_value: '', cost_basis: '', date: new Date().toISOString().split('T')[0], notes: '' });
+    setMobileFormOpen(false);
     onRefresh();
   };
 
   return (
     <div className="w-full space-y-6">
+      <div className={cn("md:hidden fixed inset-x-0 z-30 pointer-events-none", darkMode ? "bg-slate-900" : "bg-slate-50")} style={{ top: `${mobileMaskTop}px`, height: `${mobileMaskHeight}px` }} />
+      <div className="md:hidden space-y-0">
+        <div
+          className={cn("md:hidden z-40 rounded-2xl border p-3 space-y-2.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}
+          style={{ position: 'fixed', left: '12px', right: '12px', top: `${mobileHeaderTop}px` }}
+          ref={mobileHeaderRef}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-[19px] font-extrabold leading-tight">Investments & Net Worth</h2>
+            <button type="button" onClick={() => setMobileFormOpen((prev) => !prev)} aria-label="Toggle investment form" className="h-6 w-6 rounded-full bg-emerald-500 text-white inline-flex items-center justify-center">
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Net Worth</p><p className="text-[17px] font-bold leading-5 tracking-tight truncate">{curr}{totalAssets.toLocaleString()}</p></div>
+            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Bank Balance</p><p className="text-xs font-bold">{curr}{totalBankBalance.toLocaleString()}</p></div>
+            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Goals Saving</p><p className="text-xs font-bold">{curr}{totalGoalSaving.toLocaleString()}</p></div>
+            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Invested</p><p className="text-xs font-bold">{curr}{totalInvested.toLocaleString()}</p></div>
+            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Current</p><p className="text-xs font-bold">{curr}{totalCurrentValue.toLocaleString()}</p></div>
+            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Unrealized P/L</p><p className={cn("text-xs font-bold", totalPnL >= 0 ? "text-emerald-500" : "text-rose-500")}>{curr}{totalPnL.toLocaleString()}</p></div>
+          </div>
+        </div>
+
+        <div className="md:hidden" style={{ height: `${mobileListSpacer}px` }} />
+
+        <div className={cn("rounded-2xl border p-2.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+          <div className={cn("rounded-xl border overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+            {investments.map(i => <div key={i.id} className={cn("p-3 border-b last:border-b-0", darkMode ? "border-slate-700" : "border-slate-200")}><div className="flex items-start justify-between gap-2"><div><p className="font-bold text-[14px] leading-5">{i.name} <span className="text-xs opacity-60">({i.type})</span></p><p className="text-xs opacity-70 mt-0.5">{i.date && <span>{new Date(i.date).toLocaleDateString()} | </span>}Invested: {curr}{Number(i.cost_basis).toLocaleString()} | Current: {curr}{Number(i.current_value).toLocaleString()}</p></div><div className="flex items-center gap-3 pt-1"><button onClick={()=>startEdit(i)} className="text-indigo-500"><Edit2 className="w-4 h-4"/></button><button onClick={async()=>{ if (!doubleConfirmDelete('investment')) return; await deleteInvestment(i.id); onRefresh();}} className="text-rose-500"><Trash2 className="w-4 h-4"/></button></div></div></div>)}
+            {investments.length === 0 && <p className="p-5 opacity-60 text-center text-sm">No investments added.</p>}
+          </div>
+        </div>
+      </div>
+
+        {mobileFormOpen && (
+          <div className="md:hidden fixed inset-0 z-50 bg-black/45 px-3 pt-24" onClick={() => setMobileFormOpen(false)}>
+            <div className={cn("mx-auto w-full max-w-sm rounded-2xl border p-3", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-sm">{form.id ? 'Update Asset' : 'Add Asset'}</p>
+                <button type="button" className="text-xs opacity-70" onClick={() => setMobileFormOpen(false)}>Close</button>
+              </div>
+              <form onSubmit={handleSub} className="grid grid-cols-1 gap-2">
+                <input required placeholder="Asset Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                <select value={form.type} onChange={e=>setForm({...form, type:e.target.value})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}><option>Stock</option><option>Mutual Fund</option><option>Fixed Deposit</option><option>Gold</option><option>Crypto</option><option>Other</option></select>
+                <div className="grid grid-cols-2 gap-2">
+                  <input required type="number" step="0.01" placeholder="Invested" value={form.cost_basis} onChange={e=>setForm({...form, cost_basis:e.target.value})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                  <input required type="number" step="0.01" placeholder="Current" value={form.current_value} onChange={e=>setForm({...form, current_value:e.target.value})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                </div>
+                <input required type="date" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                <div className="flex gap-2 pt-1">
+                  <button type="submit" className="bg-indigo-500 text-white rounded p-2 font-bold text-sm flex-1">{form.id ? "Update" : "Add Asset"}</button>
+                  {form.id && <button type="button" onClick={() => { setForm({ id: null, name: '', type: 'Stock', current_value: '', cost_basis: '', date: new Date().toISOString().split('T')[0], notes: '' }); setMobileFormOpen(false); }} className="bg-slate-500 text-white rounded px-3 text-sm font-bold">Cancel</button>}
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+      <div className="hidden md:block space-y-6">
       <h2 className="text-2xl font-bold">Investments & Net Worth</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className={cn("p-5 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}><p className="opacity-70 text-sm">Net Worth</p><p className="text-2xl font-bold">{curr}{totalAssets.toLocaleString()}</p></div>
         <div className={cn("p-5 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}><p className="opacity-70 text-sm">Invested</p><p className="text-2xl font-bold">{curr}{totalInvested.toLocaleString()}</p></div>
-        <div className={cn("p-5 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}><p className="opacity-70 text-sm">Unrealized P/L</p><p className={cn("text-2xl font-bold", (investments.reduce((s, i) => s + Number(i.current_value || 0), 0) - totalInvested) >= 0 ? "text-emerald-500" : "text-rose-500")}>{curr}{(investments.reduce((s, i) => s + Number(i.current_value || 0), 0) - totalInvested).toLocaleString()}</p></div>
+        <div className={cn("p-5 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}><p className="opacity-70 text-sm">Unrealized P/L</p><p className={cn("text-2xl font-bold", totalPnL >= 0 ? "text-emerald-500" : "text-rose-500")}>{curr}{totalPnL.toLocaleString()}</p></div>
       </div>
 
       <form onSubmit={handleSub} className={cn("p-6 rounded-2xl border grid grid-cols-1 md:grid-cols-6 gap-3 align-middle", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
@@ -1358,6 +1457,7 @@ function WealthView({ investments, accounts, curr, onRefresh, darkMode }) {
       <div className={cn("rounded-2xl border overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
         {investments.map(i => <div key={i.id} className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center"><div><p className="font-bold">{i.name} <span className="text-xs opacity-60">({i.type})</span></p><p className="text-xs opacity-70">{i.date && <span>{new Date(i.date).toLocaleDateString()} | </span>}Invested: {curr}{Number(i.cost_basis).toLocaleString()} | Current: {curr}{Number(i.current_value).toLocaleString()}</p></div><div className="flex items-center gap-2"><button onClick={()=>startEdit(i)} className="text-indigo-500"><Edit2 className="w-4 h-4"/></button><button onClick={async()=>{ if (!doubleConfirmDelete('investment')) return; await deleteInvestment(i.id); onRefresh();}} className="text-rose-500"><Trash2 className="w-4 h-4"/></button></div></div>)}
         {investments.length === 0 && <p className="p-6 opacity-60 text-center">No investments added.</p>}
+      </div>
       </div>
     </div>
   );
@@ -1780,9 +1880,22 @@ function ActivityView({ transactions, notifications, reminders, goals, investmen
 
 function NotificationsView({ notifications, darkMode, onRefresh }) {
   const unread = notifications.filter(n => !n.is_read).length;
+  const formatDateTime = (value) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return String(value);
+    return parsed.toLocaleString();
+  };
+
+  const badgeClass = (level = 'info') => {
+    if (level === 'danger') return 'bg-rose-100 text-rose-700';
+    if (level === 'warning') return 'bg-amber-100 text-amber-700';
+    return 'bg-sky-100 text-sky-700';
+  };
+
   return (
     <div className="w-full space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="hidden md:flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Notification Center</h2>
           <p className="text-sm opacity-70">Unread: {unread}</p>
@@ -1793,13 +1906,67 @@ function NotificationsView({ notifications, darkMode, onRefresh }) {
         </div>
       </div>
 
-      <div className={cn("rounded-2xl border overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+      <div className="md:hidden space-y-3 pb-20">
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-extrabold leading-tight whitespace-nowrap">Notification Center</h2>
+              <p className="mt-2 text-base font-semibold">Total:{notifications.length}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center justify-end gap-2">
+                <button onClick={async()=>{ await markAllNotificationsRead(); onRefresh(); }} className="px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold">Mark All Read</button>
+                <button onClick={async()=>{ if (!doubleConfirmDelete('notifications')) return; await clearNotifications(); onRefresh(); }} className="px-3 py-1.5 rounded-md bg-rose-500 text-white text-xs font-semibold">Clear All</button>
+              </div>
+              <p className="text-sm opacity-70">Unread: {unread}</p>
+            </div>
+          </div>
+
+          <div className={cn("rounded-2xl border overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+            {notifications.map((n, idx) => (
+              <div key={n.id} className={cn("px-3 py-3", idx !== notifications.length - 1 && (darkMode ? "border-b border-slate-700" : "border-b border-slate-100"), !n.is_read && (darkMode ? "bg-slate-700/30" : "bg-indigo-50/40"))}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide", badgeClass(n.level))}>{n.level || 'info'}</span>
+                      <span className="text-[11px] opacity-60">{formatDateTime(n.created_at)}</span>
+                    </div>
+                    <p className="text-sm leading-5">{n.message}</p>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={async()=>{ if (!n.is_read) { await markNotificationRead(n.id); onRefresh(); } }}
+                      className={cn("text-xs font-semibold", n.is_read ? "opacity-60" : "text-indigo-500")}
+                    >
+                      {n.is_read ? 'Read' : 'Mark Read'}
+                    </button>
+                    {!n.is_read && (
+                      <button
+                        type="button"
+                        aria-label="Dismiss notification"
+                        onClick={async()=>{ await markNotificationRead(n.id); onRefresh(); }}
+                        className="text-rose-500 hover:text-rose-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {notifications.length === 0 && <p className="p-6 text-center text-sm opacity-60">No notifications yet.</p>}
+          </div>
+        </div>
+      </div>
+
+      <div className={cn("hidden md:block rounded-2xl border overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
         {notifications.map(n => (
           <div key={n.id} className={cn("p-4 border-b flex justify-between items-start gap-3", darkMode ? "border-slate-700" : "border-slate-100", !n.is_read && (darkMode ? "bg-slate-700/30" : "bg-indigo-50/40"))}>
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className={cn("text-xs px-2 py-0.5 rounded-full", n.level === 'danger' ? "bg-rose-100 text-rose-700" : n.level === 'warning' ? "bg-amber-100 text-amber-700" : "bg-sky-100 text-sky-700")}>{n.level}</span>
-                <span className="text-xs opacity-60">{new Date(n.created_at).toLocaleString()}</span>
+                <span className="text-xs opacity-60">{formatDateTime(n.created_at)}</span>
               </div>
               <p className="text-sm">{n.message}</p>
             </div>

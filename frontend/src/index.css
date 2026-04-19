@@ -47,6 +47,22 @@
   scrollbar-width: none;
 }
 
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible {
+  outline: none;
+}
+
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible {
+  outline: none !important;
+}
+
+.recharts-wrapper {
+  -webkit-tap-highlight-color: transparent;
+}
+
 @media (max-width: 767px) {
   @keyframes mm-slide-fade-up {
     from {
