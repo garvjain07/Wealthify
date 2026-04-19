@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getAccounts, getCategories, getTransactions, addTransaction, editTransaction, deleteTransaction, exportCSV, importCSV, uploadMedia, login, register, addAccount, editAccount, getAccountDeleteImpact, addCategory, editCategory, getCategoryDeleteImpact, deleteAccount, deleteCategory, getProfile, updateProfile, checkUsernameAvailability, getSubscriptions, addSubscription, editSubscription, deleteSubscription, getAnalytics, getDebts, addDebt, settleDebt, verifyPin, getInvestments, addInvestment, editInvestment, deleteInvestment, getGoals, getGoalUtilizationHistory, addGoal, editGoal, contributeGoal, withdrawGoal, utilizeGoal, deleteGoal, downloadBackup, getReminders, getForecast, runRecurringAutomation, getNotifications, markNotificationRead, markAllNotificationsRead, clearNotifications, bulkDeleteTransactions, bulkTagTransactions, getYearlyComparison, downloadMonthlyPdf, downloadTaxExport, restoreBackup, closeMonthSnapshot, getSnapshots, getSavedFilters, deleteSmartFilter, resetPin, getTransactionQualityIssues, markTransactionQualityIssueIgnored, getOfflineQueueCount, getOfflineQueueItems, syncOfflineTransactionQueue, removeOfflineQueueItem, clearOfflineQueue, retryOfflineQueueItemNow } from './api';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ChartTooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Wallet, User, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Plus, LayoutDashboard, ListOrdered, Download, Moon, Sun, Trash2, Edit2, LogOut, Settings, Upload, Repeat, BarChart2, CalendarClock, FileText, Target, CheckCircle2, TrendingUp, Shield, PiggyBank, Hash, Bell, Search, Filter, Command, ArrowLeftRight } from 'lucide-react';
+import { Wallet, User, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Plus, LayoutDashboard, ListOrdered, Download, Moon, Sun, Trash2, Edit2, LogOut, Settings, Upload, Repeat, BarChart2, CalendarClock, CalendarDays, FileText, Target, CheckCircle2, TrendingUp, Shield, PiggyBank, Hash, Bell, Search, Filter, Command, ArrowLeftRight, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import activityLogo from './assets/activity-logo.svg';
 
 export function cn(...inputs) { return twMerge(clsx(inputs)) }
 
@@ -200,6 +201,7 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
   const gBud = userProfile.monthly_budget || 0;
   const gBudPercent = gBud > 0 ? Math.min((totalExp / gBud) * 100, 100) : 0;
   const gBudOver = gBud > 0 && totalExp >= gBud;
+  const dateFilterLabel = dateFilter === 'current' ? 'This Month' : dateFilter === 'last' ? 'Last Month' : 'All Time';
 
   const expData = Object.entries(filteredTxns.filter(t => t.transaction_type === 'Expense').reduce((acc, curr) => {
       acc[curr.category_name] = (acc[curr.category_name] || 0) + curr.amount; return acc;
@@ -218,44 +220,27 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
 
   const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981'];
   const getIcon = (type) => type==='Bank' ? <Landmark className="w-5 h-5 text-blue-500" /> : type==='Wallet' ? <Wallet className="w-5 h-5 text-purple-500" /> : <Banknote className="w-5 h-5 text-emerald-500" />;
-  const mobileTopTabs = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'transactions', icon: ListOrdered, label: 'Transactions' },
-    { id: 'activity', icon: Hash, label: 'Activity' },
-    { id: 'balances', icon: Landmark, label: 'Balances' },
-    { id: 'subscriptions', icon: Repeat, label: 'Subscriptions' },
-    { id: 'wealth', icon: TrendingUp, label: 'Wealth' },
-    { id: 'goals', icon: PiggyBank, label: 'Goals' },
-    { id: 'calendar', icon: CalendarClock, label: 'Calendar' },
-    { id: 'analytics', icon: BarChart2, label: 'Analytics' },
-    { id: 'notifications', icon: Bell, label: 'Notifications' },
-    { id: 'settings', icon: Settings, label: 'Settings' }
-  ];
   const mobileBottomTabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
     { id: 'transactions', icon: ListOrdered, label: 'Txns' },
     { id: 'balances', icon: Landmark, label: 'Balance' },
     { id: 'wealth', icon: TrendingUp, label: 'Wealth' },
-    { id: 'goals', icon: PiggyBank, label: 'Goals' }
+    { id: 'goals', icon: PiggyBank, label: 'Goals' },
+    { id: 'settings', icon: Settings, label: 'Settings' }
   ];
 
     const NavBtn = ({ id, icon: Icon, label }) => (
       <button onClick={() => setActiveTab(id)} className={cn("flex items-center gap-2 px-3 py-2 rounded-xl font-medium text-sm transition", activeTab === id ? "bg-emerald-500 text-white" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700")}><Icon className="w-4 h-4" /> {label}</button>
   );
 
-  const MobileNavBtn = ({ id, icon: Icon, label }) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      className={cn(
-        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition",
-        activeTab === id ? "bg-emerald-500 text-white" : "text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-300"
-      )}
-    >
-      <Icon className="w-3.5 h-3.5" />
-      {label}
-    </button>
-  );
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const mobileQuickActions = [
+    { id: 'activity', imageSrc: activityLogo, onClick: () => setActiveTab('activity'), label: 'Activity Log' },
+    { id: 'calendar', icon: CalendarDays, onClick: () => setActiveTab('calendar'), label: 'Calendar' },
+    { id: 'subscriptions', icon: RefreshCw, onClick: () => setActiveTab('subscriptions'), label: 'Recurring' },
+    { id: 'analytics', icon: BarChart2, onClick: () => setActiveTab('analytics'), label: 'Analytics' },
+    { id: 'notifications', icon: Bell, onClick: () => setActiveTab('notifications'), label: 'Notifications' }
+  ];
 
   return (
     <div className={cn("min-h-screen md:h-screen flex", darkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50 text-slate-900")}>
@@ -284,53 +269,96 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         </div>
       </aside>
 
-      <main className="flex-1 p-4 pb-24 md:pb-8 md:p-8 overflow-y-auto">
-        <div className="md:hidden mb-4 space-y-3">
-          <div className={cn("p-3 rounded-2xl border flex items-center justify-between", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="bg-emerald-500 p-2 rounded-lg"><Wallet className="w-4 h-4 text-white" /></div>
-              <div className="min-w-0">
-                <p className="text-xs opacity-70">Welcome</p>
-                <p className="text-sm font-bold truncate">Wealthify App</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setShowQuickAdd(true)} className="p-2 rounded-lg bg-indigo-500 text-white"><Plus className="w-4 h-4" /></button>
-              <button onClick={() => setDarkMode(!darkMode)} className={cn("p-2 rounded-lg", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-100 text-slate-700")}>{darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</button>
-              <button onClick={onLogout} className="p-2 rounded-lg bg-rose-500 text-white"><LogOut className="w-4 h-4" /></button>
+      <main className="flex-1 px-3 pt-3 pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-8 md:p-8 overflow-y-auto text-[15px] md:text-base">
+        {activeTab === 'transactions' && <div className={cn("md:hidden fixed inset-x-0 top-0 h-[186px] z-30 pointer-events-none", darkMode ? "bg-slate-900" : "bg-slate-50")} />}
+
+        <div className="md:hidden fixed left-3 right-3 top-3 z-50 space-y-3 mobile-top-shell-enter">
+          <div className={cn("rounded-2xl border px-2.5 py-2 shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+            <div className="grid grid-cols-7 gap-1.5 items-center">
+                {mobileQuickActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={`mobile-quick-${action.id}`}
+                      type="button"
+                      onClick={action.onClick}
+                      aria-label={action.label}
+                      className={cn(
+                        "relative h-8 w-8 rounded-lg inline-flex items-center justify-center border transition",
+                        activeTab === action.id
+                          ? "bg-emerald-500 text-white border-emerald-500"
+                          : (darkMode ? "bg-slate-900 text-slate-200 border-slate-700" : "bg-slate-50 text-slate-600 border-slate-200")
+                      )}
+                    >
+                      {action.imageSrc
+                        ? <img src={action.imageSrc} alt={action.label} className={cn("w-5 h-5 object-contain", darkMode ? "invert" : "")} />
+                        : <Icon className="w-4 h-4" />}
+                      {action.id === 'notifications' && unreadCount > 0 && <span className="absolute -right-1 -top-1 min-w-[14px] h-[14px] px-1 rounded-full bg-rose-500 text-white text-[9px] leading-[14px] font-bold">{Math.min(unreadCount, 9)}</span>}
+                    </button>
+                  );
+                })}
+
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                aria-label="Toggle dark mode"
+                className={cn(
+                  "h-8 w-8 rounded-lg border inline-flex items-center justify-center transition",
+                  darkMode ? "bg-slate-900 border-slate-600" : "bg-slate-50 border-slate-300"
+                )}
+              >
+                {darkMode
+                  ? <Moon className="w-4 h-4 text-slate-100" />
+                  : <Sun className="w-4 h-4 text-amber-500" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('settings')}
+                aria-label="Profile"
+                className={cn(
+                  "h-8 w-8 rounded-full border inline-flex items-center justify-center overflow-hidden",
+                  activeTab === 'settings'
+                    ? "border-emerald-500"
+                    : (darkMode ? "border-slate-600" : "border-slate-300")
+                )}
+              >
+                {String(userProfile?.avatar_url || '').trim()
+                  ? <img src={userProfile.avatar_url} alt="Profile" className="h-full w-full object-cover" />
+                  : <User className={cn("w-4 h-4", darkMode ? "text-slate-200" : "text-slate-600")} />}
+              </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto pb-1 custom-scrollbar">
-            <div className="flex gap-2 w-max">
-              {mobileTopTabs.map((tab) => (
-                <MobileNavBtn key={`mobile-top-${tab.id}`} id={tab.id} icon={tab.icon} label={tab.label} />
-              ))}
-            </div>
-          </div>
         </div>
+
+        <div className="md:hidden h-[74px]" />
 
         {(offlineQueueCount > 0 || syncingOffline) && <div className={cn("mb-4 p-3 rounded-xl text-sm flex items-center justify-between", darkMode ? "bg-amber-900/40 border border-amber-700" : "bg-amber-50 border border-amber-200")}><span>{syncingOffline ? 'Syncing offline transactions...' : `${offlineQueueCount} transaction(s) queued offline`}</span><button onClick={async()=>{ setSyncingOffline(true); try { await syncOfflineTransactionQueue(); } finally { setSyncingOffline(false); setOfflineQueueCount(getOfflineQueueCount()); setOfflineQueueItems(getOfflineQueueItems()); fetchData(); } }} className="px-3 py-1 rounded bg-amber-500 text-white text-xs font-bold">Sync Now</button></div>}
         {activeTab === 'dashboard' && (
-           <div className="w-full space-y-5">
-             <header className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
-               <div><h2 className="text-2xl font-bold">Overview</h2><p className="opacity-70">Track your finances</p></div>
-               <div className="flex flex-col sm:flex-row gap-2 md:gap-4 w-full md:w-auto">
-                 <button onClick={exportCSV} className="flex gap-2 items-center justify-center bg-indigo-50 text-indigo-600 px-4 py-2 font-medium rounded-xl hover:bg-indigo-100 transition"><FileText className="w-4 h-4"/> Export Report (CSV)</button>
-                 <select value={dateFilter} onChange={e=>setDateFilter(e.target.value)} className={cn("px-4 py-2 rounded-xl text-sm font-medium border outline-none", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                   <option value="current">This Month</option><option value="last">Last Month</option><option value="all">All Time</option>
-                 </select>
-               </div>
-             </header>
+           <div className="w-full space-y-4 md:space-y-5">
+             {gBud <= 0 && <div className="w-full md:w-auto">
+               <select value={dateFilter} onChange={e=>setDateFilter(e.target.value)} className={cn("w-full md:w-auto px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-xs md:text-sm font-medium border outline-none", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+                 <option value="current">This Month</option><option value="last">Last Month</option><option value="all">All Time</option>
+               </select>
+             </div>}
 
-             {gBud > 0 && <div className={cn("p-4 rounded-2xl border shadow-sm space-y-2", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                 <div className="flex justify-between font-semibold text-sm"><span>Global Monthly Budget</span><span className={cn(gBudOver?"text-rose-500":"")}>{curr}{totalExp.toLocaleString()} / {curr}{gBud.toLocaleString()}</span></div>
-                 <div className={cn("h-4 w-full rounded-full overflow-hidden", darkMode?"bg-slate-900":"bg-slate-100")}>
-                     <div className={cn("h-full transition-all", gBudOver?"bg-rose-500":gBudPercent>80?"bg-amber-500":"bg-emerald-500")} style={{width:`${gBudPercent}%`}}></div>
+             {gBud > 0 && <div className={cn("p-2.5 md:p-4 rounded-xl md:rounded-2xl border shadow-sm space-y-2 md:space-y-2", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+                 <div className="flex items-center justify-between gap-2">
+                   <span className="font-semibold text-xs md:text-sm">Global Monthly Budget</span>
+                   <select value={dateFilter} onChange={e=>setDateFilter(e.target.value)} className={cn("w-[122px] md:w-auto px-2 py-1 md:px-3 md:py-1.5 rounded-lg text-[11px] md:text-sm font-medium border outline-none", darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-300")}>
+                     <option value="current">This Month</option><option value="last">Last Month</option><option value="all">All Time</option>
+                   </select>
+                 </div>
+                 <div className="flex items-center gap-3">
+                   <div className={cn("h-3 md:h-4 flex-1 rounded-full overflow-hidden", darkMode?"bg-slate-900":"bg-slate-100")}>
+                       <div className={cn("h-full transition-all", gBudOver?"bg-rose-500":gBudPercent>80?"bg-amber-500":"bg-emerald-500")} style={{width:`${gBudPercent}%`}}></div>
+                   </div>
+                   <div className={cn("shrink-0 font-semibold text-xs md:text-sm", gBudOver?"text-rose-500":"")}>{curr}{totalExp.toLocaleString()} / {curr}{gBud.toLocaleString()}</div>
                  </div>
              </div>}
 
-             {visibleReminders.length > 0 && showAlertsPanel && <div className={cn("p-4 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+             {visibleReminders.length > 0 && showAlertsPanel && <div className={cn("p-3 md:p-4 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
                <div className="flex items-center justify-between">
                  <h3 className="font-semibold text-base">Smart Alerts</h3>
                  <button onClick={() => setShowAlerts(!showAlerts)} className={cn("px-3 py-1 rounded-lg text-xs font-semibold", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-100 text-slate-700")}>{showAlerts ? 'Hide' : `Show (${Math.min(visibleReminders.length, 6)})`}</button>
@@ -344,35 +372,35 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
                <button onClick={() => setDismissedAlertKeys([])} className={cn("px-3 py-1 rounded-lg text-xs font-semibold", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-100 text-slate-700")}>Restore Alerts</button>
              </div>}
 
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+             <div className="grid grid-cols-3 gap-1.5 md:gap-3">
                 {[{l: "Total Balance", v: totalBal, c: ""}, {l: "Income", v: totalInc, c: "text-emerald-500", ic: ArrowUpCircle}, {l: "Expenses", v: totalExp, c: "text-rose-500", ic: ArrowDownCircle}].map((b, i) => (
-                    <div key={i} className={cn("p-4 rounded-2xl border shadow-sm flex flex-col gap-1", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                       <div className="flex items-center gap-2 opacity-70 font-medium text-sm">{b.l} {b.ic && <b.ic className={cn("w-4 h-4", b.c)}/>}</div>
-                       <div className={cn("text-2xl font-bold", b.c)}>{b.l === 'Expenses' && b.v>0?'-':b.l==='Income'&&b.v>0?'+':''}{curr}{b.v.toLocaleString()}</div>
+                  <div key={i} className={cn("p-2.5 md:p-4 rounded-xl md:rounded-2xl border shadow-sm flex flex-col gap-1", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+                    <div className="flex items-center gap-1 opacity-70 font-medium text-[10px] md:text-sm leading-tight">{b.l} {b.ic && <b.ic className={cn("w-3 h-3 md:w-4 md:h-4", b.c)}/>}</div>
+                    <div className={cn("text-[13px] md:text-2xl font-bold", b.c)}>{b.l === 'Expenses' && b.v>0?'-':b.l==='Income'&&b.v>0?'+':''}{curr}{b.v.toLocaleString()}</div>
                     </div>
                 ))}
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                 <div className={cn("p-4 border rounded-2xl shadow-sm h-[420px] flex flex-col", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                    <h3 className="text-base font-semibold mb-2">Expenses Breakdown</h3>
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                <div className={cn("col-span-1 order-2 p-3 md:p-4 border rounded-2xl shadow-sm h-[178px] md:h-[420px] flex flex-col", darkMode ? "bg-slate-800/95 border-slate-600" : "bg-white border-slate-200")}>
+                    <h3 className={cn("text-[11px] md:text-base font-semibold mb-1 md:mb-2", darkMode ? "text-slate-100" : "text-slate-900")}>Expenses Breakdown</h3>
                       {expData.length > 0 ? (
                         <div className="flex-1 min-h-0 w-full">
                            <ResponsiveContainer width="100%" height="100%">
-                            <PieChart><Pie data={expData} cx="50%" cy="50%" innerRadius={74} outerRadius={126} paddingAngle={5} dataKey="value">{expData.map((e, idx) => (<Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />))}</Pie><ChartTooltip formatter={(v) => `${curr}${v}`} /></PieChart>
+                            <PieChart><Pie data={expData} cx="50%" cy="52%" innerRadius="54%" outerRadius="78%" paddingAngle={2} dataKey="value">{expData.map((e, idx) => (<Cell key={`cell-${idx}`} fill={["#f24848", "#ef4444", "#fb7185", "#f87171", "#dc2626"][idx % 5]} />))}</Pie><ChartTooltip formatter={(v) => `${curr}${v}`} /></PieChart>
                            </ResponsiveContainer>
                         </div>
                     ) : <div className="flex-1 min-h-0 flex items-center justify-center opacity-50 text-sm">No expenses.</div>}
                  </div>
 
-                 <div className={cn("p-4 border rounded-2xl shadow-sm h-[420px] flex flex-col", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                    <h3 className="text-base font-semibold mb-2">Income Breakdown</h3>
+                 <div className={cn("col-span-1 order-1 md:order-2 p-3 md:p-4 border rounded-2xl shadow-sm h-[178px] md:h-[420px] flex flex-col", darkMode ? "bg-slate-800/95 border-slate-600" : "bg-white border-slate-200")}>
+                    <h3 className={cn("text-[11px] md:text-base font-semibold mb-1 md:mb-2", darkMode ? "text-slate-100" : "text-slate-900")}>Income Breakdown</h3>
                     {incData.length > 0 ? (
                       <div className="flex-1 min-h-0 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={incData} cx="50%" cy="50%" innerRadius={74} outerRadius={126} paddingAngle={5} dataKey="value">
-                              {incData.map((e, idx) => (<Cell key={`inc-cell-${idx}`} fill={COLORS[(idx + 3) % COLORS.length]} />))}
+                            <Pie data={incData} cx="50%" cy="52%" innerRadius="54%" outerRadius="78%" paddingAngle={2} dataKey="value">
+                              {incData.map((e, idx) => (<Cell key={`inc-cell-${idx}`} fill={["#eab308", "#facc15", "#f59e0b", "#fbbf24", "#ca8a04"][idx % 5]} />))}
                             </Pie>
                             <ChartTooltip formatter={(v) => `${curr}${v}`} />
                           </PieChart>
@@ -381,20 +409,20 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
                     ) : <div className="flex-1 min-h-0 flex items-center justify-center opacity-50 text-sm">No income.</div>}
                  </div>
 
-                 <div className={cn("p-4 border rounded-2xl shadow-sm h-[420px] flex flex-col", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                    <h3 className="text-base font-semibold">Category Budgets (This Month)</h3>
-                <div className="space-y-4 mt-3 overflow-y-auto pr-1">
+                  <div className={cn("col-span-2 md:col-span-1 order-3 md:order-3 p-3 md:p-4 border rounded-2xl shadow-sm h-[200px] md:h-[420px] flex flex-col", darkMode ? "bg-slate-800/95 border-slate-600" : "bg-white border-slate-200")}>
+                    <h3 className="text-[11px] md:text-base font-semibold leading-tight">Category Budgets <span className="text-sky-400">({dateFilterLabel})</span></h3>
+                <div className="space-y-2.5 md:space-y-4 mt-2 md:mt-3 overflow-y-auto pr-1">
                   {categories.filter(c => c.type === 'Expense' && c.monthly_budget > 0).map(c => {
                       const spent = expData.find(e => e.name === c.name)?.value || 0;
                       const percent = Math.min((spent / c.monthly_budget) * 100, 100);
                       const isOver = spent >= c.monthly_budget;
                       return (
                         <div key={c.id}>
-                           <div className="flex justify-between text-sm mb-1">
+                           <div className="flex justify-between text-[10px] md:text-sm mb-1.5">
                               <span className="font-medium">{c.name}</span>
                               <span className={cn(isOver ? "text-rose-500 font-bold" : "opacity-70")}>{curr}{spent} / {curr}{c.monthly_budget}</span>
                            </div>
-                           <div className={cn("h-3 w-full rounded-full overflow-hidden", darkMode ? "bg-slate-900" : "bg-slate-100")}>
+                           <div className={cn("h-3.5 w-full rounded-full overflow-hidden", darkMode ? "bg-slate-900" : "bg-slate-100")}>
                               <div className={cn("h-full transition-all", isOver ? "bg-rose-500" : percent > 80 ? "bg-amber-500" : "bg-emerald-500")} style={{width: `${percent}%`}}></div>
                            </div>
                         </div>
@@ -402,25 +430,25 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
                   })}
 
                     <div>
-                      <div className="flex justify-between text-sm mb-1">
+                      <div className="flex justify-between text-[10px] md:text-sm mb-1">
                         <span className="font-medium">Goals Contribution</span>
                         <span className={cn(goalContributionSpent > 0 ? "text-indigo-500 font-bold" : "opacity-70")}>{curr}{goalContributionSpent.toLocaleString()}</span>
                       </div>
-                      <div className={cn("h-3 w-full rounded-full overflow-hidden", darkMode ? "bg-slate-900" : "bg-slate-100")}>
+                      <div className={cn("h-3.5 w-full rounded-full overflow-hidden", darkMode ? "bg-slate-900" : "bg-slate-100")}>
                         <div className="h-full transition-all bg-indigo-500" style={{width: `${goalContributionSpent > 0 ? 100 : 0}%`}}></div>
                       </div>
                     </div>
 
-                  <div className={cn("pt-3 border-t", darkMode ? "border-slate-700" : "border-slate-200")}> 
-                    <h4 className="font-semibold text-sm mb-2">Income Targets</h4>
-                    <div className="space-y-3">
+                  <div className={cn("pt-2 md:pt-3 border-t", darkMode ? "border-slate-700" : "border-slate-200")}> 
+                    <h4 className="font-semibold text-[10px] md:text-sm mb-2">Income Targets</h4>
+                    <div className="space-y-2 md:space-y-3">
                       {categories.filter(c => c.type === 'Income' && c.monthly_budget > 0).map(c => {
                         const earned = incData.find(e => e.name === c.name)?.value || 0;
                         const percent = Math.min((earned / c.monthly_budget) * 100, 100);
                         const met = earned >= c.monthly_budget;
                         return (
                           <div key={`inc-${c.id}`}>
-                            <div className="flex justify-between text-sm mb-1">
+                            <div className="flex justify-between text-[10px] md:text-sm mb-1">
                               <span className="font-medium">{c.name}</span>
                               <span className={cn(met ? "text-emerald-500 font-bold" : "opacity-70")}>{curr}{earned} / {curr}{c.monthly_budget}</span>
                             </div>
@@ -449,25 +477,36 @@ function MainApp({ userProfile, onLogout, darkMode, setDarkMode, refreshProfile 
         {activeTab === 'calendar' && <CalendarView transactions={transactions} darkMode={darkMode} curr={curr} />}
         {activeTab === 'analytics' && <AnalyticsView analytics={analytics} transactions={transactions} forecast={forecast} yearlyComparison={yearlyComparison} darkMode={darkMode} curr={curr} lazyCharts={lazyCharts} />}
         {activeTab === 'notifications' && <NotificationsView notifications={notifications} darkMode={darkMode} onRefresh={fetchData} />}
-        {activeTab === 'settings' && <SettingsView accounts={accounts} categories={categories} onRefresh={fetchData} refreshProfile={refreshProfile} userProfile={userProfile} darkMode={darkMode} snapshots={snapshots} offlineQueueItems={offlineQueueItems} setOfflineQueueItems={setOfflineQueueItems} setOfflineQueueCount={setOfflineQueueCount} />}
+        {activeTab === 'settings' && <SettingsView accounts={accounts} categories={categories} onRefresh={fetchData} refreshProfile={refreshProfile} userProfile={userProfile} darkMode={darkMode} snapshots={snapshots} offlineQueueItems={offlineQueueItems} setOfflineQueueItems={setOfflineQueueItems} setOfflineQueueCount={setOfflineQueueCount} onExportCSV={exportCSV} />}
 
         {showQuickAdd && <QuickAddModal accounts={accounts} categories={categories} onClose={() => setShowQuickAdd(false)} onSaved={fetchData} darkMode={darkMode} setOfflineQueueCount={setOfflineQueueCount} />}
 
-        <div className={cn("md:hidden fixed bottom-0 left-0 right-0 z-20 border-t px-2 py-2", darkMode ? "bg-slate-900/95 border-slate-700" : "bg-white/95 border-slate-200") }>
-          <div className="grid grid-cols-5 gap-1">
+        <button
+          type="button"
+          onClick={() => setShowQuickAdd(true)}
+          aria-label="Quick add"
+          className="md:hidden fixed right-5 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 h-12 w-12 rounded-full bg-emerald-500 text-white shadow-xl inline-flex items-center justify-center"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+
+        <div className="md:hidden fixed bottom-3 left-3 right-3 z-30 mobile-bottom-nav-enter">
+          <div className={cn("rounded-3xl border px-2 py-2 shadow-2xl backdrop-blur", darkMode ? "bg-slate-900/95 border-slate-700" : "bg-white/95 border-slate-200") }>
+            <div className="grid grid-cols-6 gap-1">
             {mobileBottomTabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={`mobile-bottom-${tab.id}`}
                   onClick={() => setActiveTab(tab.id)}
-                  className={cn("flex flex-col items-center justify-center py-1 rounded-lg text-[11px] font-semibold", activeTab === tab.id ? "text-emerald-500" : "text-slate-500")}
+                  className={cn("flex flex-col items-center justify-center py-1.5 rounded-2xl text-[11px] font-semibold transition", activeTab === tab.id ? "bg-emerald-500 text-white" : "text-slate-500")}
                 >
-                  <Icon className="w-4 h-4 mb-0.5" />
+                  <Icon className="w-4 h-4 mb-1" />
                   {tab.label}
                 </button>
               );
             })}
+            </div>
           </div>
         </div>
       </main>
@@ -483,17 +522,17 @@ function AuthScreen({ onAuth, darkMode }) {
         catch (err) { setError(err.response?.data?.error || "Error"); }
     }
     return (
-        <div className={cn("min-h-screen flex items-center justify-center", darkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50")}>
-            <div className={cn("p-8 rounded-2xl border shadow-xl w-full max-w-md", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                <div className="flex justify-center mb-6"><div className="bg-emerald-500 p-3 rounded-xl"><Wallet className="w-8 h-8 text-white" /></div></div>
-                <h2 className="text-2xl font-bold text-center mb-8">{isLogin ? 'Login' : 'Sign Up'}</h2>
+        <div className={cn("min-h-screen flex items-center justify-center px-4", darkMode ? "bg-slate-900 text-slate-100" : "bg-slate-50")}>
+            <div className={cn("p-5 md:p-8 rounded-2xl border shadow-xl w-full max-w-[285px] md:max-w-md", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+            <div className="flex justify-center mb-4 md:mb-6"><div className="bg-emerald-500 p-2.5 md:p-3 rounded-xl"><Wallet className="w-6 h-6 md:w-8 md:h-8 text-white" /></div></div>
+            <h2 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">{isLogin ? 'Login' : 'Sign Up'}</h2>
                 {error && <div className="bg-rose-50 text-rose-500 p-3 rounded mb-4 text-center text-sm">{error}</div>}
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    <input required placeholder="Username" className={cn("w-full p-3 rounded-lg border outline-none", darkMode ? "bg-slate-900 border-slate-700" : "border-slate-300")} value={username} onChange={e=>setUsername(e.target.value)} />
-                    <input type="password" required placeholder="Password" className={cn("w-full p-3 rounded-lg border outline-none", darkMode ? "bg-slate-900 border-slate-700" : "border-slate-300")} value={password} onChange={e=>setPassword(e.target.value)} />
-                    <button className="bg-emerald-500 text-white font-bold py-3 rounded-xl">{isLogin ? 'Login' : 'Sign Up'}</button>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3 md:gap-4">
+              <input required placeholder="Username" className={cn("w-full px-3 py-2.5 md:p-3 rounded-lg border outline-none text-sm", darkMode ? "bg-slate-900 border-slate-700" : "border-slate-300")} value={username} onChange={e=>setUsername(e.target.value)} />
+              <input type="password" required placeholder="Password" className={cn("w-full px-3 py-2.5 md:p-3 rounded-lg border outline-none text-sm", darkMode ? "bg-slate-900 border-slate-700" : "border-slate-300")} value={password} onChange={e=>setPassword(e.target.value)} />
+              <button className="bg-emerald-500 text-white font-bold py-2.5 md:py-3 rounded-xl text-sm">{isLogin ? 'Login' : 'Sign Up'}</button>
                 </form>
-                <div className="text-center mt-6 text-sm"><button onClick={() => setIsLogin(!isLogin)} className="text-emerald-500 font-bold underline">{isLogin ? 'Needs an account? Register' : 'Have an account? Login'}</button></div>
+            <div className="text-center mt-5 md:mt-6 text-xs md:text-sm"><button onClick={() => setIsLogin(!isLogin)} className="text-emerald-500 font-bold underline">{isLogin ? 'Needs an account? Register' : 'Have an account? Login'}</button></div>
             </div>
         </div>
     );
@@ -501,7 +540,9 @@ function AuthScreen({ onAuth, darkMode }) {
 
 function TransactionView({ transactions, accounts, categories, onRefresh, darkMode, curr, txPage, setTxPage, txPageSize, setTxPageSize, txTotal, savedFilters, qualityIssueMap, qualityDetailsMap, setOfflineQueueCount, setOfflineQueueItems }) {
   const [isOpen, setIsOpen] = useState(false); const [uploading, setUploading] = useState(false); const [editingId, setEditingId] = useState(null);
+  const [mobileTxStep, setMobileTxStep] = useState(1);
   const txFormRef = useRef(null);
+  const swipeStartRef = useRef({ x: 0, y: 0 });
   const [formData, setFormData] = useState({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '', payment_mode: '', payment_app: '' });
   const [tagFilter, setTagFilter] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
@@ -511,6 +552,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
   const [splitMode, setSplitMode] = useState(false);
   const [splitItems, setSplitItems] = useState([{ category_id: '', amount: 0, tag: '' }, { category_id: '', amount: 0, tag: '' }]);
   const [expandedSplitRows, setExpandedSplitRows] = useState({});
+  const [expandedMobileDescriptionId, setExpandedMobileDescriptionId] = useState(null);
 
   const selectedSourceAccount = accounts.find((a) => Number(a.id) === Number(formData.account_id));
   const selectedSourceType = String(selectedSourceAccount?.type || '').toLowerCase();
@@ -556,6 +598,47 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
       txFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [isOpen, editingId]);
+
+  useEffect(() => {
+    // On mobile, disable pagination behavior by loading a large page size once.
+    if (typeof window === 'undefined') return;
+    if (window.innerWidth < 768 && Number(txPageSize) < 1000) {
+      setTxPage(1);
+      setTxPageSize(1000);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!expandedMobileDescriptionId) return;
+
+    const collapseDescription = () => setExpandedMobileDescriptionId(null);
+    window.addEventListener('scroll', collapseDescription, { passive: true });
+    window.addEventListener('wheel', collapseDescription, { passive: true });
+    window.addEventListener('touchmove', collapseDescription, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', collapseDescription);
+      window.removeEventListener('wheel', collapseDescription);
+      window.removeEventListener('touchmove', collapseDescription);
+    };
+  }, [expandedMobileDescriptionId]);
+
+  const handleTxFormTouchStart = (e) => {
+    const touch = e.changedTouches?.[0];
+    if (!touch) return;
+    swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTxFormTouchEnd = (e) => {
+    const touch = e.changedTouches?.[0];
+    if (!touch) return;
+    const dx = touch.clientX - swipeStartRef.current.x;
+    const dy = touch.clientY - swipeStartRef.current.y;
+    // Ignore mostly vertical gestures so normal scrolling still works.
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) setMobileTxStep((prev) => Math.min(3, prev + 1));
+    if (dx > 0) setMobileTxStep((prev) => Math.max(1, prev - 1));
+  };
 
   const isProtectedTxn = (tx) => {
       const tag = String(tx?.tag || '').trim().toLowerCase();
@@ -607,10 +690,12 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
       setFormData({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '', payment_mode: '', payment_app: '' });
       setSplitMode(false);
       setSplitItems([{ category_id: '', amount: 0, tag: '' }, { category_id: '', amount: 0, tag: '' }]);
+        setMobileTxStep(1);
       onRefresh(); 
   };
   const filteredList = transactions.filter(t => {
-      const hay = `${t.description || ''} ${t.category_name || ''} ${t.account_name || ''} ${t.tag || ''} ${t.payment_mode || ''} ${t.payment_app || ''}`.toLowerCase();
+      const splitTags = (t.splits || []).map((s) => s.tag || '').join(' ');
+      const hay = `${t.description || ''} ${t.category_name || ''} ${t.account_name || ''} ${t.tag || ''} ${t.payment_mode || ''} ${t.payment_app || ''} ${splitTags}`.toLowerCase();
       const matchesText = !searchFilter || hay.includes(searchFilter.toLowerCase());
       const tagNeedle = tagFilter.toLowerCase();
       const matchesTag = !tagFilter
@@ -722,10 +807,41 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
   const toolbarGroupClass = cn("h-9 flex items-center gap-2 px-3 rounded-xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200");
 
   return (
-    <div className="w-full space-y-6">
-       <div className={cn("p-4 rounded-2xl border shadow-sm space-y-3", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+    <div className="w-full space-y-4 md:space-y-6">
+      <div className={cn("md:hidden fixed left-3 right-3 top-[78px] z-40 p-3 rounded-2xl border shadow-sm space-y-2.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+         <div className="flex items-center justify-between gap-2">
+           <h2 className="text-[24px] leading-none font-extrabold tracking-tight">Transactions</h2>
+           <div className="flex items-center gap-1.5">
+             <button onClick={exportCSV} className={cn("h-8 w-[50px] rounded-md text-[8px] font-semibold inline-flex items-center justify-center whitespace-nowrap", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-100 text-slate-700")}>CSV Export</button>
+             <label className="h-8 w-[50px] rounded-md text-[8px] font-semibold bg-indigo-500 text-white inline-flex items-center justify-center whitespace-nowrap cursor-pointer">CSV Import<input type="file" accept=".csv" className="hidden" onChange={handleCsvImport}/></label>
+             <button type="button" onClick={() => setIsOpen(!isOpen)} className={cn("h-8 w-8 rounded-xl inline-flex items-center justify-center border", darkMode ? "border-emerald-400 text-emerald-400" : "border-emerald-500 text-emerald-500")}><Plus className="w-4 h-4" /></button>
+           </div>
+         </div>
+
+         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,44%)] gap-2">
+           <div className={cn("h-9 flex items-center gap-2 px-3 rounded-xl border", darkMode ? "bg-slate-900 border-slate-700" : "bg-slate-50 border-slate-200")}>
+             <Search className="w-4 h-4 opacity-60" />
+             <input value={searchFilter} onChange={e=>setSearchFilter(e.target.value)} placeholder="Search Txns & # Tags" className={cn("bg-transparent outline-none text-sm flex-1", darkMode ? "placeholder:text-slate-400" : "placeholder:text-slate-500")} />
+           </div>
+           <div className={cn("h-9 flex items-center gap-2 px-3 rounded-xl border min-w-0 overflow-hidden", darkMode ? "bg-slate-900 border-slate-700" : "bg-slate-50 border-slate-200")}>
+             <Filter className="w-4 h-4 opacity-60" />
+             <select value={quickFilter} onChange={e=>setQuickFilter(e.target.value)} className={cn("bg-transparent outline-none text-xs flex-1 min-w-0 pr-1 truncate", darkMode ? "text-slate-200" : "text-slate-700")}>
+               <option value="all">All</option>
+               <option value="income">Income</option>
+               <option value="expense">Expense</option>
+               <option value="transfer">Transfer</option>
+               <option value="thisWeek">This Week</option>
+               <option value="thisMonth">This Month</option>
+             </select>
+           </div>
+         </div>
+       </div>
+
+      <div className="md:hidden h-[104px]" />
+
+       <div className={cn("hidden md:block p-3 md:p-4 rounded-2xl border shadow-sm space-y-3", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
          <header className="flex items-center justify-between gap-3">
-           <h2 className="text-2xl font-bold">Transactions</h2>
+           <h2 className="text-xl md:text-2xl font-bold">Transactions</h2>
          </header>
 
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -762,7 +878,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
          </div>}
        </div>
 
-       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div className="hidden md:flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
          <div className="flex items-center gap-2 flex-wrap">
            <span className="text-sm opacity-70">Bulk:</span>
            <input value={bulkTag} onChange={e=>setBulkTag(e.target.value)} placeholder="Tag selected" className={`${toolbarFieldClass} w-full sm:w-56`} />
@@ -778,25 +894,41 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
        </div>
 
        {isOpen && (
-         <div ref={txFormRef} className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-            <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className="block text-sm mb-2">Type</label><TxFormSelect darkMode={darkMode} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}><option>Expense</option><option>Income</option><option>Transfer</option></TxFormSelect></div>
-                <div><label className="block text-sm mb-2">Amount</label><TxFormInput darkMode={darkMode} type="number" step="0.01" required value={splitMode && formData.type !== 'Transfer' ? splitItems.reduce((sum, s) => sum + Number(s.amount || 0), 0) : formData.amount} onChange={e => setFormData({...formData, amount: parseFloat(e.target.value)})} disabled={splitMode && formData.type !== 'Transfer'} /></div>
-                <div><label className="block text-sm mb-2">{formData.type === 'Transfer' ? 'From' : 'Account'}</label><TxFormSelect darkMode={darkMode} required value={formData.account_id} onChange={e => setFormData({...formData, account_id: parseInt(e.target.value)})}><option value="">Select...</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</TxFormSelect></div>
+         <div ref={txFormRef} className={cn("p-3 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+            <div className="md:hidden mb-3 grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((step) => (
+                <button
+                  key={`tx-step-${step}`}
+                  type="button"
+                  onClick={() => setMobileTxStep(step)}
+                  className={cn(
+                    "h-9 rounded-xl text-xs font-semibold",
+                    mobileTxStep === step ? "bg-emerald-500 text-white" : (darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-700")
+                  )}
+                >
+                  Step {step}
+                </button>
+              ))}
+            </div>
+            <p className="md:hidden text-[11px] opacity-70 mb-3">Swipe left or right to move between steps</p>
+            <form onSubmit={submit} onTouchStart={handleTxFormTouchStart} onTouchEnd={handleTxFormTouchEnd} className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6", `mobile-step-stage-${mobileTxStep}`)}>
+                <div className={cn(mobileTxStep === 1 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">Type</label><TxFormSelect darkMode={darkMode} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}><option>Expense</option><option>Income</option><option>Transfer</option></TxFormSelect></div>
+                <div className={cn(mobileTxStep === 1 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">Amount</label><TxFormInput darkMode={darkMode} type="number" step="0.01" required value={splitMode && formData.type !== 'Transfer' ? splitItems.reduce((sum, s) => sum + Number(s.amount || 0), 0) : formData.amount} onChange={e => setFormData({...formData, amount: parseFloat(e.target.value)})} disabled={splitMode && formData.type !== 'Transfer'} /></div>
+                <div className={cn(mobileTxStep === 1 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">{formData.type === 'Transfer' ? 'From' : 'Account'}</label><TxFormSelect darkMode={darkMode} required value={formData.account_id} onChange={e => setFormData({...formData, account_id: parseInt(e.target.value)})}><option value="">Select...</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</TxFormSelect></div>
                 {formData.type === 'Transfer' ? 
-                  <div><label className="block text-sm mb-2">To</label><TxFormSelect darkMode={darkMode} required value={formData.to_account_id} onChange={e => setFormData({...formData, to_account_id: parseInt(e.target.value)})}><option value="">Select...</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</TxFormSelect></div> :
-                  <div><label className="block text-sm mb-2">Category</label><TxFormSelect darkMode={darkMode} required value={formData.category_id} onChange={e => setFormData({...formData, category_id: parseInt(e.target.value)})}><option value="">Select...</option>{categories.filter(c=>c.type===formData.type).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</TxFormSelect></div>}
-                <div><label className="block text-sm mb-2">Date</label><TxFormInput darkMode={darkMode} type="date" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} /></div>
-                <div><label className="block text-sm mb-2">Description</label><TxFormInput darkMode={darkMode} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
-                <div><label className="block text-sm mb-2">Tag (optional)</label><TxFormInput darkMode={darkMode} placeholder="#GoaTrip2026" value={formData.tag || ''} onChange={e => setFormData({...formData, tag: e.target.value})} /></div>
+                  <div className={cn(mobileTxStep === 1 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">To</label><TxFormSelect darkMode={darkMode} required value={formData.to_account_id} onChange={e => setFormData({...formData, to_account_id: parseInt(e.target.value)})}><option value="">Select...</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</TxFormSelect></div> :
+                  <div className={cn(mobileTxStep === 1 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">Category</label><TxFormSelect darkMode={darkMode} required value={formData.category_id} onChange={e => setFormData({...formData, category_id: parseInt(e.target.value)})}><option value="">Select...</option>{categories.filter(c=>c.type===formData.type).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</TxFormSelect></div>}
+                <div className={cn(mobileTxStep === 2 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">Date</label><TxFormInput darkMode={darkMode} type="date" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} /></div>
+                <div className={cn(mobileTxStep === 2 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">Description</label><TxFormInput darkMode={darkMode} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
+                <div className={cn(mobileTxStep === 2 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">Tag (optional)</label><TxFormInput darkMode={darkMode} placeholder="#GoaTrip2026" value={formData.tag || ''} onChange={e => setFormData({...formData, tag: e.target.value})} /></div>
                 {formData.type !== 'Transfer' && (
-                  <div className="flex items-center gap-3 mt-7">
+                  <div className={cn("flex items-center gap-3 mt-7", mobileTxStep === 2 ? "block" : "hidden", "md:flex")}>
                     <input type="checkbox" checked={splitMode} onChange={(e)=>setSplitMode(e.target.checked)} />
                     <span className="text-sm font-medium">Enable Split Transaction</span>
                   </div>
                 )}
                 {splitMode && formData.type !== 'Transfer' && (
-                  <div className="md:col-span-2 space-y-3 p-4 rounded-xl border border-dashed border-slate-400/40">
+                  <div className={cn("md:col-span-2 space-y-3 p-4 rounded-xl border border-dashed border-slate-400/40", mobileTxStep === 2 ? "block" : "hidden", "md:block")}>
                     {splitItems.map((item, idx) => (
                       <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <TxFormSelect darkMode={darkMode} value={item.category_id} onChange={e=>setSplitItems(splitItems.map((s,i)=>i===idx?{...s, category_id: Number(e.target.value)}:s))}><option value="">Category...</option>{categories.filter(c=>c.type===formData.type).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</TxFormSelect>
@@ -808,8 +940,8 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
                     <button type="button" onClick={()=>setSplitItems([...splitItems, { category_id: '', amount: 0, tag: '' }])} className="text-indigo-500 text-sm font-medium">+ Add Split Row</button>
                   </div>
                 )}
-                 <div className="md:col-span-2"><label className="block text-sm mb-2">Receipt (Image)</label><input type="file" onChange={handleTxFile} /> {uploading && 'Uploading...'} {formData.receipt_url && <a href={formData.receipt_url} className="text-emerald-500">View</a>}</div>
-                <div className="md:col-span-2 min-h-[64px]">
+                 <div className={cn("md:col-span-2", mobileTxStep === 2 ? "block" : "hidden", "md:block")}><label className="block text-sm mb-2">Receipt (Image)</label><input type="file" onChange={handleTxFile} /> {uploading && 'Uploading...'} {formData.receipt_url && <a href={formData.receipt_url} className="text-emerald-500">View</a>}</div>
+                <div className={cn("md:col-span-2 min-h-[64px]", mobileTxStep === 3 ? "block" : "hidden", "md:block")}>
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
                     <div className="md:col-span-4 md:max-w-[280px]">
                       <label className={cn("block text-sm mb-2", !showPaymentFields && "invisible")}>Mode (optional)</label>
@@ -837,7 +969,62 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
          </div>
        )}
 
-           <div className={cn("border text-sm rounded-2xl shadow-sm overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+       <div className="md:hidden space-y-2">
+         {filteredList.map((t, idx) => {
+           const isGoalTxn = isProtectedTxn(t);
+           const rawDescription = String(t.description || 'No description');
+           const mobileDescription = rawDescription.length > 22 ? `${rawDescription.slice(0, 22)}...` : rawDescription;
+           return (
+             <div key={`mobile-${t.id}`} className={cn("border rounded-xl p-2.5 space-y-1.5 mobile-card-stagger", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200", (qualityIssueMap[t.id] || []).length ? (darkMode ? "ring-1 ring-amber-700/60" : "ring-1 ring-amber-200") : "") } style={{ animationDelay: `${Math.min(idx * 40, 240)}ms` }}>
+               <div className="flex items-start justify-between gap-2">
+                 <div className="min-w-0 flex items-start gap-2">
+                   <input type="checkbox" checked={selectedIds.includes(t.id)} onChange={(e)=>setSelectedIds(prev => e.target.checked ? [...new Set([...prev, t.id])] : prev.filter(id => id !== t.id))} className="h-4 w-4 mt-0.5 shrink-0" />
+                   <button
+                     type="button"
+                     onClick={() => {
+                       if (rawDescription.length <= 22) return;
+                       setExpandedMobileDescriptionId((prev) => (prev === t.id ? null : t.id));
+                     }}
+                     className="text-left max-w-full"
+                   >
+                     <p className={cn("font-semibold text-[15px] leading-tight", expandedMobileDescriptionId === t.id ? "whitespace-normal break-words" : "overflow-hidden whitespace-nowrap text-ellipsis")}>
+                       {expandedMobileDescriptionId === t.id ? rawDescription : mobileDescription}
+                     </p>
+                   </button>
+                 </div>
+                 <div className={cn("font-bold text-[16px] leading-none whitespace-nowrap shrink-0 text-right", t.transaction_type==='Income' ? "text-emerald-500" : t.transaction_type==='Transfer' ? "text-blue-500" : "text-rose-500")}>
+                   {t.transaction_type==='Transfer' ? `${curr}${Math.abs(t.amount)}` : `${t.transaction_type==='Income'?'+':'-'}${curr}${Math.abs(t.amount)}`}
+                 </div>
+               </div>
+               <div className="flex items-center justify-between gap-2">
+                 <div className="flex flex-nowrap gap-1.5 min-w-0 overflow-x-auto overflow-y-hidden whitespace-nowrap pr-1">
+                   <span className={cn("text-[11px] px-2 py-0.5 rounded shrink-0", darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-200 text-slate-700")}>
+                     {t.transaction_type === 'Transfer' ? 'Transfer' : (t.splits && t.splits.length ? `Split (${t.splits.length})` : (t.category_name || 'Uncategorized'))}
+                   </span>
+                   {(t.tag || '').trim() && <span className="text-[11px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 shrink-0">{t.tag}</span>}
+                   {t.payment_mode && <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">{t.payment_mode}</span>}
+                   {t.payment_app && <span className="text-[11px] px-2 py-0.5 rounded bg-sky-100 text-sky-700 shrink-0">{t.payment_app}</span>}
+                 </div>
+                 <div className="flex items-center gap-1.5 shrink-0">
+                   <button disabled={isGoalTxn} title={isGoalTxn ? 'System-generated transaction cannot be edited' : 'Edit transaction'} onClick={() => !isGoalTxn && handleEdit(t)} className={cn("h-7 w-7 rounded-lg inline-flex items-center justify-center", isGoalTxn ? "opacity-40 cursor-not-allowed bg-slate-200 text-slate-400" : (darkMode ? "bg-slate-700 text-indigo-300" : "bg-indigo-50 text-indigo-500"))}><Edit2 className="w-3.5 h-3.5"/></button>
+                   <button disabled={isGoalTxn} title={isGoalTxn ? 'System-generated transaction cannot be deleted' : 'Delete transaction'} onClick={async ()=>{ if (isGoalTxn) return; if (!doubleConfirmDelete('transaction')) return; const result = await deleteTransaction(t.id); if (result?.data?.queued) { alert('Delete queued in offline mode.'); setOfflineQueueCount(getOfflineQueueCount()); setOfflineQueueItems(getOfflineQueueItems()); } onRefresh()}} className={cn("h-7 w-7 rounded-lg inline-flex items-center justify-center", isGoalTxn ? "opacity-40 cursor-not-allowed bg-slate-200 text-slate-400" : (darkMode ? "bg-slate-700 text-rose-300" : "bg-rose-50 text-rose-500"))}><Trash2 className="w-3.5 h-3.5"/></button>
+                 </div>
+               </div>
+               <div className="border-t pt-1.5 flex items-center justify-between gap-2">
+                 <div className="text-xs opacity-75 break-words min-w-0 pr-2">
+                   {t.transaction_type === 'Transfer'
+                     ? `From ${t.account_name || 'Unknown'} -> To ${t.to_account_name || 'Unknown'}`
+                     : `${t.transaction_type === 'Income' ? 'To' : 'From'} ${t.account_name || 'Unknown'}`}
+                 </div>
+                 <p className="text-[11px] opacity-65 whitespace-nowrap">{t.date}</p>
+               </div>
+               {(qualityIssueMap[t.id] || []).length > 0 && <div className="text-[11px] text-amber-600 font-medium">{qualityIssueMap[t.id].join(' • ')}</div>}
+             </div>
+           );
+         })}
+       </div>
+
+           <div className={cn("hidden md:block border text-sm rounded-2xl shadow-sm overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
              <div className="overflow-x-auto">
              <table className="w-full min-w-[900px] text-left"><thead className={cn("border-b opacity-70", darkMode ? "bg-slate-900 border-slate-700":"bg-slate-50")}><tr><th className="p-4"><input type="checkbox" onChange={(e)=>setSelectedIds(e.target.checked ? filteredList.map(x=>x.id) : [])} checked={filteredList.length > 0 && selectedIds.length === filteredList.length} /></th><th className="p-4">Date</th><th className="p-4">Details</th><th className="p-4">Category</th><th className="p-4">Account</th><th className="p-4 text-right">Amount</th><th className="p-4"></th></tr></thead>
             <tbody>
@@ -879,7 +1066,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
           </table>
           </div>
        </div>
-       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 gap-2">
+       <div className="hidden md:flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 gap-2">
          <div className="text-sm opacity-70">Total: {txTotal}</div>
          <div className="flex items-center gap-2 flex-wrap sm:justify-end">
            <button disabled={txPage <= 1} onClick={()=>setTxPage(Math.max(1, txPage - 1))} className={cn("h-9 px-3 rounded-lg border text-sm font-medium disabled:opacity-40", darkMode ? "border-slate-700 bg-slate-800" : "border-slate-300 bg-white")}>Prev</button>
@@ -1431,6 +1618,7 @@ function QuickAddModal({ accounts, categories, onClose, onSaved, darkMode, setOf
 function ActivityView({ transactions, notifications, reminders, goals, investments, goalUtilizationItems, curr, darkMode }) {
   const [kindFilter, setKindFilter] = useState('all');
   const [rangeFilter, setRangeFilter] = useState('all');
+  const [expandedActivity, setExpandedActivity] = useState({});
 
   const txActivity = transactions.map((tx) => ({
     key: `tx-${tx.id}`,
@@ -1540,14 +1728,14 @@ function ActivityView({ transactions, notifications, reminders, goals, investmen
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold">Activity</h2>
+          <h2 className="text-xl md:text-2xl font-bold">Activity</h2>
           <p className="text-sm opacity-70">All recent transactions, reminders, notifications, goals and assets.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select value={kindFilter} onChange={(e) => setKindFilter(e.target.value)} className={cn("px-3 py-2 rounded-lg text-sm border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-300")}>
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <select value={kindFilter} onChange={(e) => setKindFilter(e.target.value)} className={cn("px-3 py-2 rounded-lg text-sm border w-full sm:w-auto", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-300")}>
             <option value="all">All Types</option>
             <option value="goal">Only Goals</option>
             <option value="asset">Only Assets</option>
@@ -1556,13 +1744,13 @@ function ActivityView({ transactions, notifications, reminders, goals, investmen
             <option value="reminder">Only Reminders</option>
             <option value="goal-utilization">Only Goal Utilization</option>
           </select>
-          <select value={rangeFilter} onChange={(e) => setRangeFilter(e.target.value)} className={cn("px-3 py-2 rounded-lg text-sm border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-300")}>
+          <select value={rangeFilter} onChange={(e) => setRangeFilter(e.target.value)} className={cn("px-3 py-2 rounded-lg text-sm border w-full sm:w-auto", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-300")}>
             <option value="all">All Time</option>
             <option value="today">Today</option>
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
           </select>
-          <div className={cn("px-3 py-2 rounded-lg text-sm", darkMode ? "bg-slate-800" : "bg-slate-100")}>
+          <div className={cn("px-3 py-2 rounded-lg text-sm w-full sm:w-auto text-center", darkMode ? "bg-slate-800" : "bg-slate-100")}>
             Total: {filteredActivities.length}
           </div>
         </div>
@@ -1570,14 +1758,16 @@ function ActivityView({ transactions, notifications, reminders, goals, investmen
 
       <div className={cn("rounded-2xl border overflow-hidden", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
         {filteredActivities.map((item) => (
-          <div key={item.key} className={cn("p-4 border-b flex items-start justify-between gap-4", darkMode ? "border-slate-700" : "border-slate-100")}>
+          <div key={item.key} className={cn("p-3 md:p-4 border-b flex items-start justify-between gap-3 md:gap-4", darkMode ? "border-slate-700" : "border-slate-100")}>
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className={cn("text-xs px-2 py-0.5 rounded-full", item.kind === 'transaction' ? "bg-indigo-100 text-indigo-700" : item.kind === 'reminder' ? "bg-amber-100 text-amber-700" : item.kind === 'goal' ? "bg-emerald-100 text-emerald-700" : item.kind === 'asset' ? "bg-violet-100 text-violet-700" : item.kind === 'goal-utilization' ? "bg-teal-100 text-teal-700" : "bg-sky-100 text-sky-700")}>{item.kind}</span>
                 <span className={cn("text-xs px-2 py-0.5 rounded-full", item.level === 'expense' ? "bg-rose-100 text-rose-700" : item.level === 'warning' ? "bg-amber-100 text-amber-700" : item.level === 'success' ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700")}>{item.level}</span>
               </div>
               <p className="text-sm font-medium break-words">{item.message}</p>
-              <p className="text-xs opacity-70 mt-1 break-words">{item.detail}</p>
+              <p className="text-xs opacity-70 mt-1 break-words hidden md:block">{item.detail}</p>
+              <button type="button" onClick={() => setExpandedActivity((prev) => ({ ...prev, [item.key]: !prev[item.key] }))} className="md:hidden mt-1 text-[11px] text-indigo-500 font-medium">{expandedActivity[item.key] ? 'Hide details' : 'Show details'}</button>
+              {expandedActivity[item.key] && <p className="md:hidden text-xs opacity-70 mt-1 break-words mobile-expand-panel">{item.detail}</p>}
             </div>
             <p className="text-xs opacity-60 shrink-0">{formatActivityTimestamp(item.at)}</p>
           </div>
@@ -1622,7 +1812,7 @@ function NotificationsView({ notifications, darkMode, onRefresh }) {
   );
 }
 
-function SettingsView({ accounts, categories, userProfile, refreshProfile, onRefresh, darkMode, snapshots, offlineQueueItems, setOfflineQueueItems, setOfflineQueueCount }) {
+function SettingsView({ accounts, categories, userProfile, refreshProfile, onRefresh, darkMode, snapshots, offlineQueueItems, setOfflineQueueItems, setOfflineQueueCount, onExportCSV }) {
   const [profileData, setProfileData] = useState({ username: userProfile.username || '', avatar_url: userProfile.avatar_url || '', currency: userProfile.currency || '₹', monthly_budget: userProfile.monthly_budget || 0 });
   const [usernameStatus, setUsernameStatus] = useState({ checking: false, available: true, message: '' });
   const [pinReset, setPinReset] = useState({ username: userProfile.username || '', recovery_answer: '', new_pin: '' });
@@ -1634,6 +1824,7 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
   const [categoryImpactMap, setCategoryImpactMap] = useState({});
   const [categoryImpactLoadingMap, setCategoryImpactLoadingMap] = useState({});
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState('profile');
   const avatarInputRef = useRef(null);
 
   const currencyOptions = [
@@ -1845,9 +2036,21 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
   };
 
   return (
-      <div className="w-full space-y-8">
-          <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-<h2 className="text-xl font-bold mb-4">User Profile & Settings</h2>
+        <div className="w-full space-y-6 md:space-y-8">
+          <div className="md:hidden grid grid-cols-4 gap-2">
+            {[{ id: 'profile', label: 'Profile' }, { id: 'security', label: 'Security' }, { id: 'data', label: 'Data' }, { id: 'manage', label: 'Manage' }].map((item) => (
+              <button key={item.id} type="button" onClick={() => setSettingsSection(item.id)} className={cn("h-9 rounded-xl text-[11px] font-semibold transition-all duration-200", settingsSection === item.id ? "bg-emerald-500 text-white scale-[1.02]" : (darkMode ? "bg-slate-800 text-slate-200" : "bg-slate-100 text-slate-700"))}>{item.label}</button>
+            ))}
+          </div>
+
+          <div className={cn("p-3 md:p-4 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+            <button onClick={onExportCSV} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-600 transition">
+              <FileText className="w-4 h-4" /> Export Report (CSV)
+            </button>
+          </div>
+
+          <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white", settingsSection === 'profile' ? "block" : "hidden", "md:block")}>
+    <h2 className="text-lg md:text-xl font-bold mb-4">User Profile & Settings</h2>
              <form onSubmit={handleProfSubmit} className="flex flex-col gap-4"> 
                   <div className="flex items-center gap-4 mb-2">
                     <div className="relative">
@@ -1881,28 +2084,28 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
              </form>
           </div>
 
-          <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-            <h2 className="text-xl font-bold mb-4">PIN Recovery</h2>
+          <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white", settingsSection === 'security' ? "block" : "hidden", "md:block")}>
+            <h2 className="text-lg md:text-xl font-bold mb-4">PIN Recovery</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} placeholder="Username" value={pinReset.username} onChange={e=>setPinReset({...pinReset, username:e.target.value})} />
               <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="password" placeholder="Recovery answer" value={pinReset.recovery_answer} onChange={e=>setPinReset({...pinReset, recovery_answer:e.target.value})} />
               <input className={cn("p-2 border rounded outline-none", darkMode ? "bg-slate-900 border-slate-700":"border-slate-300")} type="password" maxLength={4} placeholder="New PIN" value={pinReset.new_pin} onChange={e=>setPinReset({...pinReset, new_pin:e.target.value})} />
             </div>
-            <button onClick={async()=>{ await resetPin(pinReset); alert('PIN reset successful'); setPinReset({...pinReset, recovery_answer:'', new_pin:''}); }} className="bg-amber-500 text-white rounded p-2 text-sm font-bold mb-4">Reset PIN with Recovery</button>
+            <button onClick={async()=>{ await resetPin(pinReset); alert('PIN reset successful'); setPinReset({...pinReset, recovery_answer:'', new_pin:''}); }} className="bg-amber-500 text-white rounded p-2 text-sm font-bold mb-4 w-full sm:w-auto">Reset PIN with Recovery</button>
           </div>
 
-          <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-            <h2 className="text-xl font-bold mb-4">Month-End Snapshots</h2>
-            <button onClick={async()=>{ await closeMonthSnapshot(); alert('Month-end balances frozen.'); onRefresh(); }} className="bg-emerald-500 text-white rounded p-2 text-sm font-bold">Freeze Current Month</button>
+          <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white", settingsSection === 'data' ? "block" : "hidden", "md:block")}>
+            <h2 className="text-lg md:text-xl font-bold mb-4">Month-End Snapshots</h2>
+            <button onClick={async()=>{ await closeMonthSnapshot(); alert('Month-end balances frozen.'); onRefresh(); }} className="bg-emerald-500 text-white rounded p-2 text-sm font-bold w-full sm:w-auto">Freeze Current Month</button>
             <div className="mt-4 space-y-2 max-h-44 overflow-auto">
               {snapshots.slice(0, 40).map(s => <div key={s.id} className={cn("p-2 rounded text-sm", darkMode ? "bg-slate-900" : "bg-slate-100")}>{s.snapshot_month} | {s.account_name}: {Number(s.closing_balance || 0).toFixed(2)}</div>)}
               {snapshots.length === 0 && <div className="text-sm opacity-60">No snapshots yet.</div>}
             </div>
           </div>
 
-          <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+          <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white", settingsSection === 'data' ? "block" : "hidden", "md:block")}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-              <h2 className="text-xl font-bold">Offline Sync Queue</h2>
+              <h2 className="text-lg md:text-xl font-bold">Offline Sync Queue</h2>
               <button onClick={() => { if (!doubleConfirmDelete('offline queue items')) return; clearOfflineQueue(); setOfflineQueueItems([]); setOfflineQueueCount(0); }} className="text-xs px-2 py-1 rounded bg-rose-500 text-white">Clear All</button>
             </div>
             <div className="space-y-2 max-h-52 overflow-auto">
@@ -1923,9 +2126,9 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                  <h2 className="text-xl font-bold mb-4">Accounts</h2>
+            <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8", settingsSection === 'manage' ? "block" : "hidden", "md:grid")}>
+              <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+                <h2 className="text-lg md:text-xl font-bold mb-4">Accounts</h2>
                   <form onSubmit={handleAddAcc} className="flex flex-col gap-3 mb-6">
                       <input required placeholder="Account Name (e.g. Chase)" value={accName} onChange={e=>setAccName(e.target.value)} className={cn("p-2 border rounded outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
                       <div className="flex flex-col sm:flex-row gap-2">
@@ -1943,8 +2146,8 @@ function SettingsView({ accounts, categories, userProfile, refreshProfile, onRef
                   </div>
               </div>
 
-              <div className={cn("p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
-                  <h2 className="text-xl font-bold mb-4">Categories</h2>
+                <div className={cn("p-4 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+                  <h2 className="text-lg md:text-xl font-bold mb-4">Categories</h2>
                   <form onSubmit={handleAddCat} className="flex flex-col gap-3 mb-6">
                       <input required placeholder="Category Name" value={catName} onChange={e=>setCatName(e.target.value)} className={cn("p-2 border rounded outline-none", darkMode?"bg-slate-900 border-slate-700":"border-slate-300")}/>
                       <div className="flex flex-col sm:flex-row gap-2">
@@ -2028,87 +2231,170 @@ function DebtsView({ debts, onRefresh, darkMode, curr }) {
 }
 
 function CalendarView({ transactions, darkMode, curr }) {
-   const [currDate, setCurrDate] = useState(new Date());
-  const monthStart = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
-  const gridStart = new Date(currDate.getFullYear(), currDate.getMonth(), 1 - monthStart.getDay());
-  const calendarDays = Array.from({ length: 42 }, (_, i) => new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i));
+  const [currDate, setCurrDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState('month');
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-   const getLocalDateStr = (d) => {
-       const offset = d.getTimezoneOffset();
-       return new Date(d.getTime() - (offset * 60000)).toISOString().split('T')[0];
-   };
-   const todayStr = getLocalDateStr(new Date());
+  const getLocalDateStr = (d) => {
+    const offset = d.getTimezoneOffset();
+    return new Date(d.getTime() - (offset * 60000)).toISOString().split('T')[0];
+  };
+
+  const todayStr = getLocalDateStr(new Date());
+  const selectedStr = getLocalDateStr(selectedDate);
+  const monthStart = new Date(currDate.getFullYear(), currDate.getMonth(), 1);
+  const monthStartMonday = (monthStart.getDay() + 6) % 7;
+  const gridStart = new Date(currDate.getFullYear(), currDate.getMonth(), 1 - monthStartMonday);
+
+  const monthDays = Array.from({ length: 42 }, (_, i) => new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i));
+  const weekStart = new Date(selectedDate);
+  weekStart.setDate(selectedDate.getDate() - ((selectedDate.getDay() + 6) % 7));
+  const weekDays = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i));
+  const calendarDays = viewMode === 'week' ? weekDays : monthDays;
+
+  const selectedDayTxns = transactions
+    .filter((t) => t.date === selectedStr)
+    .sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0));
+
+  const monthLabel = currDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const moveRange = (delta) => {
+    if (viewMode === 'week') {
+      const nextWeek = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + (7 * delta));
+      setSelectedDate(nextWeek);
+      setCurrDate(new Date(nextWeek.getFullYear(), nextWeek.getMonth(), 1));
+      return;
+    }
+
+    const nextMonth = new Date(currDate.getFullYear(), currDate.getMonth() + delta, 1);
+    setCurrDate(nextMonth);
+  };
+
+  const dayHeaders = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   return (
-  <div className="w-full flex flex-col space-y-3 pb-2">
-       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 shrink-0">
-             <h2 className="text-2xl font-bold">Calendar</h2>
-         <div className="flex items-center gap-2 sm:gap-4">
-                 <button onClick={()=>setCurrDate(new Date(currDate.setMonth(currDate.getMonth()-1)))} className="px-4 py-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition">Prev</button>
-            <span className="font-bold text-base sm:text-lg min-w-28 sm:min-w-32 text-center">{currDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                 <button onClick={()=>setCurrDate(new Date(currDate.setMonth(currDate.getMonth()+1)))} className="px-4 py-2 border rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition">Next</button>
-             </div>
-          </div>
-           <div className="grid grid-cols-7 gap-1 lg:gap-2">
-          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} className="text-center text-[11px] sm:text-sm font-bold opacity-50 py-1">{d}</div>)}
-           </div>
-           <div className="grid grid-cols-7 gap-1 lg:gap-2">
-             {calendarDays.map(d => {
-                 const dStr = getLocalDateStr(d);
-                 const isToday = dStr === todayStr;
-                 const isCurrentMonth = d.getMonth() === currDate.getMonth();
-                 const dayTxns = transactions.filter(t => t.date === dStr);
-                 const income = dayTxns.filter(t=>t.transaction_type==='Income').reduce((a,c)=>a+c.amount,0);
-                 const expense = dayTxns.filter(t=>t.transaction_type==='Expense').reduce((a,c)=>a+c.amount,0);
-                 const transfer = dayTxns.filter(t=>t.transaction_type==='Transfer').reduce((a,c)=>a+c.amount,0);
-                 return (
-                     <div key={dStr} className={cn(
-                       "p-1.5 border rounded-lg flex flex-col justify-start relative group min-h-[78px] sm:min-h-[90px]",
-                         isToday
-                           ? "border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
-                           : isCurrentMonth
-                             ? (darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 shadow-sm")
-                             : (darkMode ? "bg-slate-900/60 border-slate-800" : "bg-slate-50 border-slate-200")
-                     )}>
-                         {/* Static View Summary */}
-                         <div className={cn("text-right font-bold text-sm shrink-0 transition-opacity group-hover:opacity-0 flex justify-end items-center gap-1", isToday ? "text-indigo-600 dark:text-indigo-400" : isCurrentMonth ? "opacity-70" : "opacity-45")}>
-                           {isToday && <span className="text-[9px] px-1 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">Today</span>}
-                           <span>{d.getDate()}</span>
-                         </div>
-                         <div className="text-[10px] leading-tight space-y-0.5 mt-1 overflow-hidden transition-opacity group-hover:opacity-0">
-                             {income>0 && <div className="text-emerald-500 font-bold bg-emerald-50 dark:bg-emerald-500/10 px-1 rounded truncate">+{curr}{income}</div>}
-                             {expense>0 && <div className="text-rose-500 font-bold bg-rose-50 dark:bg-rose-500/10 px-1 rounded truncate">-{curr}{expense}</div>}
-                             {transfer>0 && <div className="text-blue-500 font-bold bg-blue-50 dark:bg-blue-500/10 px-1 rounded truncate inline-flex items-center gap-1"><ArrowLeftRight className="w-3 h-3 shrink-0" />{curr}{transfer}</div>}
-                         </div>
+    <div className="w-full h-[calc(100vh-170px)] md:h-[calc(100vh-170px)] flex flex-col gap-3 overflow-hidden">
+      <div className={cn("rounded-[26px] p-3 md:p-5 border shadow-sm shrink-0", darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200")}>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => moveRange(-1)}
+          aria-label="Previous"
+          className={cn("h-8 w-8 inline-flex items-center justify-center rounded-lg border", darkMode ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-slate-100 border-slate-200 text-slate-800")}
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
 
-                         {/* Hover View Absolute Overlay (Eliminates Jitter) */}
-                         <div className={cn(
-                           "hidden md:flex absolute -inset-2 z-50 flex-col rounded-xl shadow-2xl p-2 opacity-0 pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto transition-all duration-200 transform scale-95 md:group-hover:scale-100",
-                             darkMode ? "bg-slate-700 border border-slate-600" : "bg-white border border-slate-200"
-                         )}>
-                             <div className={cn("text-right font-bold text-sm shrink-0 mb-1 pb-1 border-b flex justify-between items-center", darkMode ? "border-slate-600" : "border-slate-100")}>
-                                 <span className="text-[10px] font-normal opacity-60 px-1">{dayTxns.length} entries</span>
-                                 <span className={cn("flex items-center gap-1", isToday ? "text-indigo-600 dark:text-indigo-400" : "")}>
-                                   {isToday && <span className="text-[9px] px-1 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">Today</span>}
-                                   <span>{d.getDate()} <span className="text-[10px] font-normal opacity-60">{(d.toLocaleString('default', { month: 'short' }))}</span></span>
-                                 </span>
-                             </div>
-                             <div className="flex flex-col text-[10px] leading-tight space-y-1 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar max-h-[150px] pb-1 pr-1">
-                                 {dayTxns.length === 0 && <div className="text-center opacity-50 italic py-2">No entries</div>}
-                                 {dayTxns.map(t => (
-                                   <div key={t.id} className={cn("px-1.5 py-1 rounded font-medium shrink-0", t.transaction_type==='Income' ? "text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-900/30" : t.transaction_type==='Transfer' ? "text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30" : "text-rose-700 bg-rose-50 dark:text-rose-300 dark:bg-rose-900/30")} title={t.description || 'Transaction'}>
-                                         <div className="font-bold flex justify-between gap-1 items-start">
-                                             <span className="truncate opacity-80 font-normal">{t.description || "Entry"}</span>
-                                       <span className="shrink-0 inline-flex items-center gap-1">{t.transaction_type==='Transfer' && <ArrowLeftRight className="w-3 h-3 shrink-0" />}{t.transaction_type==='Income'?'+':t.transaction_type==='Transfer'?'':'-'}{curr}{Math.abs(t.amount)}</span>
-                                         </div>
-                                     </div>
-                                 ))}
-                             </div>
-                         </div>
-                     </div>
-                 )
-             })}
-          </div>
+        <h2 className="text-[13px] md:text-lg font-semibold min-w-[80px]">{monthLabel}</h2>
+
+        <div className={cn("inline-flex rounded-xl p-1 border ml-auto", darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200")}>
+          {[{ id: 'month', label: 'Month' }, { id: 'week', label: 'Week' }].map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => setViewMode(m.id)}
+              className={cn(
+                "px-3 py-1 rounded-lg text-[11px] font-semibold transition",
+                viewMode === m.id
+                  ? (darkMode ? "bg-slate-600 text-white" : "bg-white text-slate-900 shadow-sm")
+                  : (darkMode ? "text-slate-300" : "text-slate-500")
+              )}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => moveRange(1)}
+          aria-label="Next"
+          className={cn("h-8 w-8 inline-flex items-center justify-center rounded-lg border", darkMode ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-slate-100 border-slate-200 text-slate-800")}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
-   );
+
+      <div className="grid grid-cols-7 gap-2 shrink-0">
+        {dayHeaders.map((d, i) => <div key={`${d}-${i}`} className="text-center text-[11px] font-semibold opacity-70">{d}</div>)}
+      </div>
+
+      <div className="grid grid-cols-7 gap-2 shrink-0">
+        {calendarDays.map((d) => {
+          const dStr = getLocalDateStr(d);
+          const isToday = dStr === todayStr;
+          const isSelected = dStr === selectedStr;
+          const isCurrentMonth = d.getMonth() === currDate.getMonth();
+          const dayCount = transactions.filter((t) => t.date === dStr).length;
+
+          return (
+            <button
+              key={dStr}
+              type="button"
+              onClick={() => setSelectedDate(d)}
+              className={cn(
+                "relative h-10 md:h-11 rounded-xl border text-[13px] font-semibold transition",
+                isSelected
+                  ? "bg-emerald-500 text-white border-emerald-500"
+                  : isToday
+                    ? (darkMode ? "bg-emerald-500/15 border-emerald-400 text-emerald-300" : "bg-emerald-100 border-emerald-300 text-emerald-700")
+                    : isCurrentMonth
+                      ? (darkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200")
+                      : (darkMode ? "bg-slate-900/60 border-slate-800 text-slate-500" : "bg-slate-50/70 border-slate-200 text-slate-400")
+              )}
+            >
+              {d.getDate()}
+              {dayCount > 0 && (
+                <span className={cn("absolute bottom-1 right-1 text-[9px] px-1 rounded-full", isSelected ? "bg-white/20 text-white" : (darkMode ? "bg-slate-700 text-slate-200" : "bg-slate-200 text-slate-600"))}>
+                  {dayCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      </div>
+
+      <div className={cn("rounded-[22px] p-3 border shadow-sm flex-1 min-h-0 flex flex-col", darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200")}>
+        <div className="flex items-center justify-between mb-2 shrink-0">
+          <h3 className="font-semibold text-sm">Entries</h3>
+          <span className="text-xs opacity-70">{selectedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+        </div>
+
+        <div className="space-y-2.5 overflow-y-auto flex-1 min-h-0 pr-1 custom-scrollbar">
+          {selectedDayTxns.length === 0 && (
+            <div className={cn("rounded-xl p-3 text-sm", darkMode ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-500")}>
+              No entries for selected date.
+            </div>
+          )}
+
+          {selectedDayTxns.map((t) => (
+            <div
+              key={t.id}
+              className={cn(
+                "rounded-xl px-3 py-3.5 border min-h-[68px]",
+                t.transaction_type === 'Income'
+                  ? (darkMode ? "bg-emerald-900/30 border-emerald-700 text-emerald-200" : "bg-emerald-100 border-emerald-200 text-emerald-900")
+                  : t.transaction_type === 'Transfer'
+                    ? (darkMode ? "bg-amber-900/30 border-amber-700 text-amber-200" : "bg-amber-100 border-amber-200 text-amber-900")
+                    : (darkMode ? "bg-rose-900/30 border-rose-700 text-rose-200" : "bg-rose-100 border-rose-200 text-rose-900")
+              )}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate">{t.description || t.category_name || 'Entry'}</p>
+                  <p className="text-[11px] opacity-70 mt-0.5 truncate">{t.category_name || t.account_name || t.transaction_type}</p>
+                </div>
+                <p className="text-sm font-bold shrink-0 inline-flex items-center gap-1">
+                  {t.transaction_type === 'Transfer' && <ArrowLeftRight className="w-3.5 h-3.5" />}
+                  {t.transaction_type === 'Income' ? '+' : t.transaction_type === 'Transfer' ? '' : '-'}{curr}{Math.abs(Number(t.amount || 0)).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -46,3 +46,67 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media (max-width: 767px) {
+  @keyframes mm-slide-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mm-pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mm-expand-fade {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 120px;
+    }
+  }
+
+  .mobile-top-shell-enter {
+    animation: mm-slide-fade-up 240ms ease-out;
+  }
+
+  .mobile-chip-strip-enter {
+    animation: mm-slide-fade-up 300ms ease-out;
+  }
+
+  .mobile-bottom-nav-enter {
+    animation: mm-pop-in 280ms ease-out;
+  }
+
+  .mobile-card-stagger {
+    animation: mm-slide-fade-up 220ms ease-out both;
+  }
+
+  .mobile-expand-panel {
+    overflow: hidden;
+    animation: mm-expand-fade 180ms ease-out;
+  }
+
+  .mobile-step-stage-1 > .block,
+  .mobile-step-stage-2 > .block,
+  .mobile-step-stage-3 > .block {
+    animation: mm-slide-fade-up 190ms ease-out;
+  }
+}
