@@ -1314,6 +1314,11 @@ app.delete('/api/notifications/clear', async (req, res) => {
     return res.json({ success: true });
 });
 
+app.delete('/api/notifications/:id', async (req, res) => {
+    await models.Notification.deleteOne({ id: Number(req.params.id), user_id: req.user.id });
+    return res.json({ success: true });
+});
+
 // --- UPLOADS & IMPORT/EXPORT ---
 app.post('/api/upload', upload.single('file'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file' });

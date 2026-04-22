@@ -186,6 +186,7 @@ export const runRecurringAutomation = () => api.post('/automation/run-recurring'
 
 export const getNotifications = () => api.get('/notifications');
 export const markNotificationRead = (id) => api.put(`/notifications/${id}/read`);
+export const deleteNotification = (id) => api.delete(`/notifications/${id}`);
 export const markAllNotificationsRead = () => api.put('/notifications/read-all');
 export const clearNotifications = () => api.delete('/notifications/clear');
 export const getYearlyComparison = () => api.get('/reports/yearly-comparison');

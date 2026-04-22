@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getAccounts, getCategories, getTransactions, addTransaction, editTransaction, deleteTransaction, exportCSV, importCSV, uploadMedia, login, register, addAccount, editAccount, getAccountDeleteImpact, addCategory, editCategory, getCategoryDeleteImpact, deleteAccount, deleteCategory, getProfile, updateProfile, checkUsernameAvailability, getSubscriptions, addSubscription, editSubscription, deleteSubscription, getAnalytics, getDebts, addDebt, settleDebt, verifyPin, getInvestments, addInvestment, editInvestment, deleteInvestment, getGoals, getGoalUtilizationHistory, addGoal, editGoal, contributeGoal, withdrawGoal, utilizeGoal, deleteGoal, downloadBackup, getReminders, getForecast, runRecurringAutomation, getNotifications, markNotificationRead, markAllNotificationsRead, clearNotifications, bulkDeleteTransactions, bulkTagTransactions, getYearlyComparison, downloadMonthlyPdf, downloadTaxExport, restoreBackup, closeMonthSnapshot, getSnapshots, getSavedFilters, deleteSmartFilter, resetPin, getTransactionQualityIssues, markTransactionQualityIssueIgnored, getOfflineQueueCount, getOfflineQueueItems, syncOfflineTransactionQueue, removeOfflineQueueItem, clearOfflineQueue, retryOfflineQueueItemNow } from './api';
+import { getAccounts, getCategories, getTransactions, addTransaction, editTransaction, deleteTransaction, exportCSV, importCSV, uploadMedia, login, register, addAccount, editAccount, getAccountDeleteImpact, addCategory, editCategory, getCategoryDeleteImpact, deleteAccount, deleteCategory, getProfile, updateProfile, checkUsernameAvailability, getSubscriptions, addSubscription, editSubscription, deleteSubscription, getAnalytics, getDebts, addDebt, settleDebt, verifyPin, getInvestments, addInvestment, editInvestment, deleteInvestment, getGoals, getGoalUtilizationHistory, addGoal, editGoal, contributeGoal, withdrawGoal, utilizeGoal, deleteGoal, downloadBackup, getReminders, getForecast, runRecurringAutomation, getNotifications, markNotificationRead, deleteNotification, markAllNotificationsRead, clearNotifications, bulkDeleteTransactions, bulkTagTransactions, getYearlyComparison, downloadMonthlyPdf, downloadTaxExport, restoreBackup, closeMonthSnapshot, getSnapshots, getSavedFilters, deleteSmartFilter, resetPin, getTransactionQualityIssues, markTransactionQualityIssueIgnored, getOfflineQueueCount, getOfflineQueueItems, syncOfflineTransactionQueue, removeOfflineQueueItem, clearOfflineQueue, retryOfflineQueueItemNow } from './api';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ChartTooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Wallet, User, Landmark, Banknote, ArrowUpCircle, ArrowDownCircle, Plus, LayoutDashboard, ListOrdered, Download, Moon, Sun, Trash2, Edit2, LogOut, Settings, Upload, Repeat, BarChart2, CalendarClock, CalendarDays, FileText, Target, CheckCircle2, TrendingUp, Shield, PiggyBank, Hash, Bell, Search, Filter, Command, ArrowLeftRight, RefreshCw, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { clsx } from "clsx";
@@ -557,6 +557,19 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
   const [expandedSplitRows, setExpandedSplitRows] = useState({});
   const [expandedMobileDescriptionId, setExpandedMobileDescriptionId] = useState(null);
 
+  const resetTxForm = () => {
+    setEditingId(null);
+    setFormData({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '', payment_mode: '', payment_app: '' });
+    setSplitMode(false);
+    setSplitItems([{ category_id: '', amount: 0, tag: '' }, { category_id: '', amount: 0, tag: '' }]);
+    setMobileTxStep(1);
+  };
+
+  const openCreateForm = () => {
+    resetTxForm();
+    setIsOpen(true);
+  };
+
   const selectedSourceAccount = accounts.find((a) => Number(a.id) === Number(formData.account_id));
   const selectedSourceType = String(selectedSourceAccount?.type || '').toLowerCase();
   const showPaymentFields = selectedSourceType === 'bank' || selectedSourceType === 'wallet';
@@ -690,10 +703,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
         setOfflineQueueItems(getOfflineQueueItems());
       }
       setIsOpen(false); 
-      setFormData({ type: 'Expense', amount: '', account_id: '', to_account_id: '', category_id: '', date: new Date().toISOString().split('T')[0], description: '', receipt_url: '', tag: '', payment_mode: '', payment_app: '' });
-      setSplitMode(false);
-      setSplitItems([{ category_id: '', amount: 0, tag: '' }, { category_id: '', amount: 0, tag: '' }]);
-        setMobileTxStep(1);
+      resetTxForm();
       onRefresh(); 
   };
   const filteredList = transactions.filter(t => {
@@ -817,7 +827,7 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
            <div className="flex items-center gap-1.5">
              <button onClick={exportCSV} className={cn("h-8 w-[50px] rounded-md text-[8px] font-semibold inline-flex items-center justify-center whitespace-nowrap", darkMode ? "bg-slate-700 text-slate-100" : "bg-slate-100 text-slate-700")}>CSV Export</button>
              <label className="h-8 w-[50px] rounded-md text-[8px] font-semibold bg-indigo-500 text-white inline-flex items-center justify-center whitespace-nowrap cursor-pointer">CSV Import<input type="file" accept=".csv" className="hidden" onChange={handleCsvImport}/></label>
-             <button type="button" onClick={() => setIsOpen(!isOpen)} className={cn("h-8 w-8 rounded-xl inline-flex items-center justify-center border", darkMode ? "border-emerald-400 text-emerald-400" : "border-emerald-500 text-emerald-500")}><Plus className="w-4 h-4" /></button>
+             <button type="button" onClick={openCreateForm} className={cn("h-8 w-8 rounded-xl inline-flex items-center justify-center border", darkMode ? "border-emerald-400 text-emerald-400" : "border-emerald-500 text-emerald-500")}><Plus className="w-4 h-4" /></button>
            </div>
          </div>
 
@@ -892,12 +902,18 @@ function TransactionView({ transactions, accounts, categories, onRefresh, darkMo
          <div className="flex items-center gap-2 flex-wrap lg:justify-end">
            <button onClick={exportCSV} className={`${toolbarBtnBase} ${darkMode ? 'bg-slate-700 text-slate-100' : 'bg-slate-200 text-slate-800'}`}><Download className="w-4 h-4"/> CSV Export</button>
            <label className={`${toolbarBtnBase} bg-indigo-500 hover:bg-indigo-600 text-white cursor-pointer`}><Upload className="w-4 h-4"/> CSV Import<input type="file" accept=".csv" className="hidden" onChange={handleCsvImport}/></label>
-           <button onClick={() => setIsOpen(!isOpen)} className={`${toolbarBtnBase} bg-emerald-500 text-white`}><Plus className="w-5 h-5"/> New</button>
+           <button onClick={openCreateForm} className={`${toolbarBtnBase} bg-emerald-500 text-white`}><Plus className="w-5 h-5"/> New</button>
          </div>
        </div>
 
+       {isOpen && <div className="md:hidden fixed inset-0 z-40 bg-black/45" onClick={() => { setIsOpen(false); resetTxForm(); }} />}
+
        {isOpen && (
-         <div ref={txFormRef} className={cn("p-3 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+         <div ref={txFormRef} className={cn("p-3 md:p-6 rounded-2xl border shadow-sm", darkMode ? "bg-slate-800 border-slate-700" : "bg-white", "fixed inset-x-3 top-24 bottom-24 z-50 overflow-y-auto md:static md:inset-auto md:top-auto md:bottom-auto md:z-auto md:overflow-visible")}>
+            <div className="md:hidden flex items-center justify-between mb-2">
+              <p className="font-semibold text-sm">{editingId ? 'Update Transaction' : 'Add Transaction'}</p>
+              <button type="button" className="text-xs opacity-70" onClick={() => { setIsOpen(false); resetTxForm(); }}>Close</button>
+            </div>
             <div className="md:hidden mb-3 grid grid-cols-3 gap-2">
               {[1, 2, 3].map((step) => (
                 <button
@@ -1391,7 +1407,7 @@ function WealthView({ investments, accounts, goals, curr, onRefresh, darkMode })
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Net Worth</p><p className="text-[17px] font-bold leading-5 tracking-tight truncate">{curr}{totalAssets.toLocaleString()}</p></div>
+            <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Net Worth</p><p className="text-xs font-bold truncate">{curr}{totalAssets.toLocaleString()}</p></div>
             <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Bank Balance</p><p className="text-xs font-bold">{curr}{totalBankBalance.toLocaleString()}</p></div>
             <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Goals Saving</p><p className="text-xs font-bold">{curr}{totalGoalSaving.toLocaleString()}</p></div>
             <div className={cn("rounded-lg border px-2 py-1.5", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}><p className="text-[10px] opacity-70">Invested</p><p className="text-xs font-bold">{curr}{totalInvested.toLocaleString()}</p></div>
@@ -1465,6 +1481,7 @@ function WealthView({ investments, accounts, goals, curr, onRefresh, darkMode })
 
 function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, accounts, curr, onRefresh, darkMode }) {
   const [form, setForm] = useState({ id: null, title: '', target_amount: 0, due_date: '' });
+  const [mobileGoalFormOpen, setMobileGoalFormOpen] = useState(false);
   const [contrib, setContrib] = useState({});
   const [contribAccount, setContribAccount] = useState({});
   const [utilizeOpen, setUtilizeOpen] = useState({});
@@ -1476,10 +1493,12 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
 
   const startEditGoal = (g) => {
     setForm({ id: g.id, title: g.title || '', target_amount: Number(g.target_amount || 0), due_date: g.due_date || '' });
+    setMobileGoalFormOpen(true);
   };
 
   const resetForm = () => {
     setForm({ id: null, title: '', target_amount: 0, due_date: '' });
+    setMobileGoalFormOpen(false);
   };
 
   const showGoalNotice = (message, type = 'success') => {
@@ -1489,13 +1508,49 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
 
   return (
     <div className="w-full space-y-6">
-      <h2 className="text-2xl font-bold">Saving Goals / Wishlist</h2>
+      <div className="md:hidden flex items-center justify-between">
+        <h2 className="text-[31px] font-bold leading-tight">Saving Goals / Wishlist</h2>
+        <button
+          type="button"
+          onClick={() => {
+            setForm({ id: null, title: '', target_amount: 0, due_date: '' });
+            setMobileGoalFormOpen(true);
+          }}
+          className="h-7 w-7 rounded-full bg-emerald-500 text-white inline-flex items-center justify-center"
+          aria-label="Add goal"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+
+      <h2 className="hidden md:block text-2xl font-bold">Saving Goals / Wishlist</h2>
       {goalNotice && (
         <div className={cn("fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-auto z-60 px-4 py-2 rounded-lg text-sm font-medium shadow-lg", goalNotice.type === 'error' ? "bg-rose-500 text-white" : "bg-emerald-500 text-white")}>
           {goalNotice.message}
         </div>
       )}
-      <form onSubmit={async (e)=>{ e.preventDefault(); if (Number(form.target_amount || 0) <= 0) { showGoalNotice('Target amount must be greater than zero', 'error'); return; } try { if (form.id) { await editGoal(form.id, form); showGoalNotice('Goal updated'); } else { await addGoal(form); showGoalNotice('Goal added'); } resetForm(); onRefresh(); } catch (error) { showGoalNotice(error?.response?.data?.error || 'Unable to save goal', 'error'); } }} className={cn("p-6 rounded-2xl border grid grid-cols-1 md:grid-cols-5 gap-3", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+
+      {mobileGoalFormOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-black/45 px-3 pt-24" onClick={() => setMobileGoalFormOpen(false)}>
+          <div className={cn("mx-auto w-full max-w-sm rounded-2xl border p-3", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="font-semibold text-sm">{form.id ? 'Update Goal' : 'Add Goal'}</p>
+              <button type="button" className="text-xs opacity-70" onClick={() => setMobileGoalFormOpen(false)}>Close</button>
+            </div>
+            <form onSubmit={async (e)=>{ e.preventDefault(); if (Number(form.target_amount || 0) <= 0) { showGoalNotice('Target amount must be greater than zero', 'error'); return; } try { if (form.id) { await editGoal(form.id, form); showGoalNotice('Goal updated'); } else { await addGoal(form); showGoalNotice('Goal added'); } resetForm(); onRefresh(); } catch (error) { showGoalNotice(error?.response?.data?.error || 'Unable to save goal', 'error'); } }} className="grid grid-cols-1 gap-2">
+              <input required placeholder="Goal title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+              <input required type="number" step="0.01" min="0.01" placeholder="Target amount" value={form.target_amount} onChange={e=>setForm({...form, target_amount:Number(e.target.value)})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+              <input type="date" value={form.due_date} onChange={e=>setForm({...form, due_date:e.target.value})} className={cn("p-2 rounded border text-sm", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+              <div className="flex gap-2 pt-1">
+                <button className="bg-emerald-500 text-white rounded p-2 font-bold text-sm flex-1">{form.id ? 'Update Goal' : 'Add Goal'}</button>
+                <button type="button" onClick={resetForm} className="bg-slate-500 text-white rounded px-3 text-sm font-bold">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={async (e)=>{ e.preventDefault(); if (Number(form.target_amount || 0) <= 0) { showGoalNotice('Target amount must be greater than zero', 'error'); return; } try { if (form.id) { await editGoal(form.id, form); showGoalNotice('Goal updated'); } else { await addGoal(form); showGoalNotice('Goal added'); } resetForm(); onRefresh(); } catch (error) { showGoalNotice(error?.response?.data?.error || 'Unable to save goal', 'error'); } }} className={cn("hidden md:grid p-6 rounded-2xl border grid-cols-1 md:grid-cols-5 gap-3", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
         <input required placeholder="Goal title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} className={cn("p-2 rounded border", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
         <input required type="number" step="0.01" min="0.01" placeholder="Target amount" value={form.target_amount} onChange={e=>setForm({...form, target_amount:Number(e.target.value)})} className={cn("p-2 rounded border", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
         <input type="date" value={form.due_date} onChange={e=>setForm({...form, due_date:e.target.value})} className={cn("p-2 rounded border", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
@@ -1503,7 +1558,154 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
         {form.id ? <button type="button" onClick={resetForm} className="bg-slate-500 text-white rounded p-2 font-bold w-full">Cancel</button> : <div className="hidden md:block" />}
       </form>
 
-      <div className="space-y-4">
+      <div className="md:hidden space-y-3">
+        {goals.map(g => {
+          const pct = Math.min((Number(g.saved_amount || 0) / Number(g.target_amount || 1)) * 100, 100);
+          const contributionAmount = Number(contrib[g.id] || 0);
+          const selectedAccountId = Number(contribAccount[g.id] || 0);
+          const canContribute = contributionAmount > 0 && selectedAccountId > 0;
+          const canWithdraw = contributionAmount > 0 && selectedAccountId > 0;
+          const selectedUtilizeType = utilizeType[g.id] || '';
+          const selectedAssetType = utilizeAssetType[g.id] || '';
+          const selectedAssetName = (utilizeAssetName[g.id] || '').trim();
+          const selectedItemName = (utilizeItemName[g.id] || '').trim();
+          const canUtilize = g.status === 'Completed'
+            && !!selectedUtilizeType
+            && (
+              (selectedUtilizeType === 'convert_assets' && !!selectedAssetType && !!selectedAssetName)
+              || (selectedUtilizeType === 'buy_things' && !!selectedItemName)
+            );
+          return <div key={`mobile-goal-${g.id}`} className={cn("p-2.5 rounded-xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200")}>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-bold text-sm leading-5">{g.title}</h3>
+              <span className={cn("text-[10px] px-2 py-0.5 rounded w-fit font-semibold", g.status === 'Completed' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>{g.status}</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2 text-[11px] opacity-80 flex-wrap">
+              <p>{curr}{Number(g.saved_amount).toLocaleString()} / {curr}{Number(g.target_amount).toLocaleString()}</p>
+              {g.due_date && <p>| Due: {g.due_date}</p>}
+            </div>
+            <div className={cn("h-2.5 rounded-full overflow-hidden mt-2", darkMode ? "bg-slate-900" : "bg-slate-100")}><div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} /></div>
+
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <input type="number" step="0.01" placeholder="Add savings" value={contrib[g.id] || ''} onChange={e=>setContrib({...contrib, [g.id]: e.target.value})} className={cn("h-8 px-2.5 rounded border text-xs", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+              <select value={contribAccount[g.id] || ''} onChange={e=>setContribAccount({...contribAccount, [g.id]: e.target.value})} className={cn("h-8 px-2.5 rounded border text-xs", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
+                <option value="">Select account</option>
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+
+            <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+              <button
+                onClick={async()=>{
+                  if (!canContribute) return;
+                  try {
+                    await contributeGoal(g.id, contributionAmount, selectedAccountId);
+                    setContrib({...contrib, [g.id]: ''});
+                    setContribAccount({...contribAccount, [g.id]: ''});
+                    showGoalNotice('Contribution added');
+                    onRefresh();
+                  } catch (error) {
+                    showGoalNotice(error?.response?.data?.error || 'Contribution failed', 'error');
+                  }
+                }}
+                disabled={!canContribute}
+                className={cn("h-7 text-[11px] rounded px-2.5", canContribute ? "bg-indigo-500 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")}
+              >
+                Contribute
+              </button>
+              <button
+                onClick={async()=>{
+                  if (!canWithdraw) return;
+                  try {
+                    await withdrawGoal(g.id, contributionAmount, selectedAccountId);
+                    setContrib({...contrib, [g.id]: ''});
+                    setContribAccount({...contribAccount, [g.id]: ''});
+                    showGoalNotice('Withdrawal added');
+                    onRefresh();
+                  } catch (error) {
+                    showGoalNotice(error?.response?.data?.error || 'Withdrawal failed', 'error');
+                  }
+                }}
+                disabled={!canWithdraw}
+                className={cn("h-7 text-[11px] rounded px-2.5", canWithdraw ? "bg-amber-500 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")}
+              >
+                Withdraw
+              </button>
+              {g.status === 'Completed' && (
+                <button
+                  type="button"
+                  onClick={() => setUtilizeOpen({ ...utilizeOpen, [g.id]: !utilizeOpen[g.id] })}
+                  className={cn("h-7 text-[11px] rounded px-2.5", darkMode ? "bg-sky-600 text-white" : "bg-sky-500 text-white")}
+                >
+                  Utilize
+                </button>
+              )}
+              <button onClick={()=>startEditGoal(g)} className="text-[11px] text-indigo-500 ml-auto">Edit</button>
+              <button onClick={async()=>{ if (!doubleConfirmDelete('goal')) return; await deleteGoal(g.id); onRefresh();}} className="text-[11px] text-rose-500">Delete</button>
+            </div>
+
+            {g.status === 'Completed' && utilizeOpen[g.id] && (
+              <div className={cn("mt-2 p-2 rounded-lg border flex flex-col gap-2", darkMode ? "border-slate-700 bg-slate-900/40" : "border-slate-200 bg-slate-50")}>
+                <select value={selectedUtilizeType} onChange={e=>setUtilizeType({ ...utilizeType, [g.id]: e.target.value })} className={cn("h-8 px-2.5 rounded border text-xs", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
+                  <option value="">Utilize as...</option>
+                  <option value="convert_assets">Convert into assets</option>
+                  <option value="buy_things">Buy things</option>
+                </select>
+                {selectedUtilizeType === 'convert_assets' && (
+                  <>
+                    <select value={selectedAssetType} onChange={e=>setUtilizeAssetType({ ...utilizeAssetType, [g.id]: e.target.value })} className={cn("h-8 px-2.5 rounded border text-xs", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")}>
+                      <option value="">Select asset type</option>
+                      <option value="Gold">Gold</option>
+                      <option value="Stock">Stock</option>
+                      <option value="Mutual Fund">Mutual Fund</option>
+                      <option value="Fixed Deposit">Fixed Deposit</option>
+                      <option value="Crypto">Crypto</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <input value={utilizeAssetName[g.id] || ''} onChange={e=>setUtilizeAssetName({ ...utilizeAssetName, [g.id]: e.target.value })} placeholder="Asset name" className={cn("h-8 px-2.5 rounded border text-xs", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                  </>
+                )}
+                {selectedUtilizeType === 'buy_things' && (
+                  <input value={utilizeItemName[g.id] || ''} onChange={e=>setUtilizeItemName({ ...utilizeItemName, [g.id]: e.target.value })} placeholder="Item name" className={cn("h-8 px-2.5 rounded border text-xs", darkMode?"bg-slate-900 border-slate-700":"bg-white border-slate-300")} />
+                )}
+                <button
+                  type="button"
+                  disabled={!canUtilize}
+                  onClick={async () => {
+                    if (!canUtilize) return;
+                    try {
+                      await utilizeGoal(g.id, {
+                        utilize_mode: selectedUtilizeType,
+                        asset_type: selectedUtilizeType === 'convert_assets' ? selectedAssetType : null,
+                        asset_name: selectedUtilizeType === 'convert_assets' ? selectedAssetName : null,
+                        item_name: selectedUtilizeType === 'buy_things' ? selectedItemName : null
+                      });
+                      const label = selectedUtilizeType === 'convert_assets' ? 'convert into assets' : 'buy things';
+                      setContrib({ ...contrib, [g.id]: '' });
+                      setContribAccount({ ...contribAccount, [g.id]: '' });
+                      setUtilizeType({ ...utilizeType, [g.id]: '' });
+                      setUtilizeAssetType({ ...utilizeAssetType, [g.id]: '' });
+                      setUtilizeAssetName({ ...utilizeAssetName, [g.id]: '' });
+                      setUtilizeItemName({ ...utilizeItemName, [g.id]: '' });
+                      setUtilizeOpen({ ...utilizeOpen, [g.id]: false });
+                      showGoalNotice(`Utilized for ${label}`);
+                      onRefresh();
+                    } catch (error) {
+                      showGoalNotice(error?.response?.data?.error || 'Utilize action failed', 'error');
+                    }
+                  }}
+                  className={cn("h-8 text-xs rounded px-3 w-full", canUtilize ? "bg-emerald-500 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed")}
+                >
+                  Apply Utilize
+                </button>
+              </div>
+            )}
+          </div>;
+        })}
+        {goals.length === 0 && <p className="opacity-60 text-center py-6 text-sm">No goals created.</p>}
+      </div>
+
+      <div className="hidden md:block space-y-4">
         {goals.map(g => {
           const pct = Math.min((Number(g.saved_amount || 0) / Number(g.target_amount || 1)) * 100, 100);
           const contributionAmount = Number(contrib[g.id] || 0);
@@ -1642,7 +1844,7 @@ function GoalsView({ goals, goalUtilizationItems, goalUtilizationTotalDeposit, a
         {goals.length === 0 && <p className="opacity-60 text-center py-8">No goals created.</p>}
       </div>
 
-      <div className={cn("p-4 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
+      <div className={cn("hidden md:block p-4 rounded-2xl border", darkMode ? "bg-slate-800 border-slate-700" : "bg-white")}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">
           <h3 className="text-lg font-semibold">Utilization History</h3>
           <p className="text-sm font-medium">Total Utilized: {curr}{Number(goalUtilizationTotalDeposit || 0).toLocaleString()}</p>
@@ -1910,13 +2112,13 @@ function NotificationsView({ notifications, darkMode, onRefresh }) {
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-xl font-extrabold leading-tight whitespace-nowrap">Notification Center</h2>
+              <h2 className="text-xl font-extrabold leading-tight whitespace-nowrap">Notification</h2>
               <p className="mt-2 text-base font-semibold">Total:{notifications.length}</p>
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center justify-end gap-2">
-                <button onClick={async()=>{ await markAllNotificationsRead(); onRefresh(); }} className="px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold">Mark All Read</button>
-                <button onClick={async()=>{ if (!doubleConfirmDelete('notifications')) return; await clearNotifications(); onRefresh(); }} className="px-3 py-1.5 rounded-md bg-rose-500 text-white text-xs font-semibold">Clear All</button>
+                <button onClick={async()=>{ await markAllNotificationsRead(); onRefresh(); }} className="h-8 w-[86px] rounded-md bg-emerald-500 text-white text-[11px] leading-tight font-semibold">Mark All Read</button>
+                <button onClick={async()=>{ if (!doubleConfirmDelete('notifications')) return; await clearNotifications(); onRefresh(); }} className="h-8 w-[86px] rounded-md bg-rose-500 text-white text-[11px] leading-tight font-semibold">Clear All</button>
               </div>
               <p className="text-sm opacity-70">Unread: {unread}</p>
             </div>
@@ -1941,16 +2143,14 @@ function NotificationsView({ notifications, darkMode, onRefresh }) {
                     >
                       {n.is_read ? 'Read' : 'Mark Read'}
                     </button>
-                    {!n.is_read && (
-                      <button
-                        type="button"
-                        aria-label="Dismiss notification"
-                        onClick={async()=>{ await markNotificationRead(n.id); onRefresh(); }}
-                        className="text-rose-500 hover:text-rose-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      aria-label="Delete notification"
+                      onClick={async()=>{ if (!doubleConfirmDelete('notification')) return; await deleteNotification(n.id); onRefresh(); }}
+                      className="text-rose-500 hover:text-rose-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
